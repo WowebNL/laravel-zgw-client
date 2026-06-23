@@ -42,6 +42,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # Advisory scanning of dependencies is handled by Dependabot, not the CI resolver.
+          # Disabling the block lets the matrix install older but still supported Laravel
+          # releases that carry advisories fixed only in a later major.
+          composer config --no-plugins policy.advisories.block false || true
           composer require --no-update --dev "orchestra/testbench:${{ matrix.testbench }}"
           composer require --no-update "illuminate/support:${{ matrix.laravel }}" "illuminate/http:${{ matrix.laravel }}"
           composer update --prefer-dist --no-interaction
