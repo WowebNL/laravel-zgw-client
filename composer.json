@@ -1,0 +1,56 @@
+{
+    "name": "woweb/laravel-zgw-client",
+    "description": "Laravel package for the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten and Besluiten.",
+    "keywords": ["laravel", "zgw", "openzaak", "zaken", "documenten", "catalogi", "besluiten", "woweb"],
+    "license": "EUPL-1.2",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Woweb",
+            "email": "info@woweb.nl"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "firebase/php-jwt": "^6.0",
+        "illuminate/http": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^2.0|^3.0",
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Woweb\\Zgw\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Woweb\\Zgw\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Woweb\\Zgw\\ZgwServiceProvider"
+            ],
+            "aliases": {
+                "Zgw": "Woweb\\Zgw\\Facades\\Zgw"
+            }
+        }
+    },
+    "scripts": {
+        "test": "@php vendor/bin/phpunit",
+        "test:coverage": "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-text",
+        "test:coverage-html": "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-html coverage"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
