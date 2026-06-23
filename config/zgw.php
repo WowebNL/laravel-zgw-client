@@ -61,8 +61,12 @@ return [
             | Strength rules for the client_secret, validated when the connection is built.
             | The secret is the HS256 signing key, so a weak secret makes token forgery easier.
             | Any rule omitted here falls back to its default (min_length 32, character classes
-            | off). Tighten or relax these per connection. To accept a short legacy secret,
-            | lower min_length; setting it to 0 with all classes false disables validation.
+            | off). Tighten or relax these per connection: lowering min_length or disabling the
+            | character classes relaxes the package's own check.
+            |
+            | Note: 32 bytes is a hard floor for HS256. firebase/php-jwt 7 refuses to sign with
+            | a shorter key, so a secret under 32 bytes cannot be used even with min_length 0.
+            | These rules let you relax composition and raise the length, not go below 32 bytes.
             */
             'secret_rules' => [
                 'min_length' => (int) env('ZGW_SECRET_MIN_LENGTH', 32),

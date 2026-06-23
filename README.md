@@ -2,7 +2,7 @@
 
 Laravel package for interacting with the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten and Besluiten.
 
-**Requirements:** PHP 8.2+, Laravel 11/12/13
+**Requirements:** PHP 8.2+, Laravel 12 or 13, firebase/php-jwt 7
 
 ## About
 
@@ -44,7 +44,7 @@ ZGW_USER_REPRESENTATION=Your Name
 
 Base URLs point at the host root. The package appends the correct path per API, for example `{base}/zaken/api/v1/`. Each ZGW API may live on the same host or on separate hosts, depending on your provider.
 
-> **Important:** by default `client_secret` must be at least 32 characters or the connection throws a `WeakSecretException` on first use. The secret is the HS256 signing key, so this is a deliberate strength floor. If your provider issued a shorter secret, lower `secret_rules.min_length` for that connection (see below). See [Secret strength](#secret-strength).
+> **Important:** the `client_secret` is the HS256 signing key, so it must be at least 32 bytes. This floor is enforced twice: the package validates the secret when a connection is built (throwing `WeakSecretException`), and `firebase/php-jwt` 7 refuses to sign with a shorter key (`DomainException: Provided key is too short`). The default `secret_rules.min_length` of 32 matches that floor. You can relax the package rules per connection, but no setting can take an HS256 secret below 32 bytes. See [Secret strength](#secret-strength).
 
 ### Full configuration reference
 
@@ -238,11 +238,11 @@ Each request is authenticated with a freshly minted HS256 JWT carrying `iss`, `i
 
 ### Secret strength
 
-The `client_secret` is validated when a connection is built, because it is the signing key. By default it must be at least 32 characters. A weak secret throws `WeakSecretException` before any request is sent. Tune the policy per connection through `secret_rules`:
+The `client_secret` is validated when a connection is built, because it is the signing key. By default it must be at least 32 bytes. A secret that fails the rules throws `WeakSecretException` before any request is sent. Tune the policy per connection through `secret_rules`:
 
 ```php
 'secret_rules' => [
-    'min_length'        => 32,    // set to 0 to accept a short legacy secret
+    'min_length'        => 32,    // lower to relax the package check (but see the floor below)
     'require_uppercase' => false,
     'require_lowercase' => false,
     'require_number'    => false,
@@ -250,7 +250,9 @@ The `client_secret` is validated when a connection is built, because it is the s
 ],
 ```
 
-Setting `min_length` to `0` with all character classes `false` disables validation entirely.
+Setting `min_length` to `0` with all character classes `false` disables the package's own validation, so you can use a secret of any composition (for example all lowercase, no symbols) for that connection.
+
+**The 32-byte floor cannot be removed for HS256.** Disabling the package validation does not allow an arbitrarily short secret. `firebase/php-jwt` 7 enforces the RFC 7518 minimum HMAC key length, so an HS256 secret shorter than 32 bytes is rejected at sign time with `DomainException: Provided key is too short`, no matter what `secret_rules` says. In practice `secret_rules` lets you relax the composition requirements and adjust the length down to 32 bytes; 32 bytes is the immovable lower bound for HS256.
 
 ### Host allowlist
 
