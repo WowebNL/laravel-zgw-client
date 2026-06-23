@@ -19,6 +19,17 @@ jobs:
       matrix:
         php: ['8.2', '8.3', '8.4']
         laravel: ['^11.0', '^12.0', '^13.0']
+        include:
+          - laravel: '^11.0'
+            testbench: '^9.0'
+          - laravel: '^12.0'
+            testbench: '^10.0'
+          - laravel: '^13.0'
+            testbench: '^11.0'
+        exclude:
+          # Laravel 13 requires PHP 8.3+.
+          - php: '8.2'
+            laravel: '^13.0'
 
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +42,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "illuminate/support:${{ matrix.laravel }}" "illuminate/http:${{ matrix.laravel }}" --no-interaction --no-update
+          composer require --no-update --dev "orchestra/testbench:${{ matrix.testbench }}"
+          composer require --no-update "illuminate/support:${{ matrix.laravel }}" "illuminate/http:${{ matrix.laravel }}"
           composer update --prefer-dist --no-interaction
 
       - name: Run tests

@@ -10,6 +10,9 @@ use Woweb\Zgw\Tests\TestCase;
 
 class AuthorizationTest extends TestCase
 {
+    // HS256 requires a key of at least 256 bits (32 bytes); firebase/php-jwt v7 enforces this.
+    private const SECRET = 'test-secret-with-sufficient-entropy-0123456789';
+
     private Authorization $authorization;
 
     protected function setUp(): void
@@ -22,7 +25,7 @@ class AuthorizationTest extends TestCase
     {
         $config = [
             'client_id' => 'my-client',
-            'client_secret' => 'my-secret',
+            'client_secret' => self::SECRET,
             'user_id' => 'user-1',
             'user_representation' => 'Jane Doe',
         ];
@@ -57,7 +60,7 @@ class AuthorizationTest extends TestCase
     {
         $config = [
             'client_id' => 'test-client',
-            'client_secret' => 'test-secret',
+            'client_secret' => self::SECRET,
             'user_id' => 'u42',
             'user_representation' => 'John',
         ];
@@ -85,7 +88,7 @@ class AuthorizationTest extends TestCase
     {
         $payload = $this->decodePayload($this->authorization->getToken([
             'client_id' => 'c',
-            'client_secret' => 's',
+            'client_secret' => self::SECRET,
         ]));
 
         $this->assertArrayHasKey('exp', $payload);
@@ -96,7 +99,7 @@ class AuthorizationTest extends TestCase
     {
         $payload = $this->decodePayload($this->authorization->getToken([
             'client_id' => 'c',
-            'client_secret' => 's',
+            'client_secret' => self::SECRET,
             'jwt_expiry' => 60,
         ]));
 
@@ -107,7 +110,7 @@ class AuthorizationTest extends TestCase
     {
         $payload = $this->decodePayload($this->authorization->getToken([
             'client_id' => 'c',
-            'client_secret' => 's',
+            'client_secret' => self::SECRET,
             'jwt_expiry' => 0,
         ]));
 
