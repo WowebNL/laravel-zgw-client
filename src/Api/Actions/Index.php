@@ -20,6 +20,8 @@ trait Index
      */
     public function index(array $params = []): LazyCollection
     {
+        $this->assertSupported('GET', $this->collectionTemplate());
+
         return $this->getMany($params);
     }
 }

@@ -14,6 +14,8 @@ trait Patch
      */
     public function patch(string $uuid, array $params): array
     {
+        $this->assertSupported('PATCH', $this->itemTemplate());
+
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid);
         $response = $this->connection->request()->patch($url, $params);
 

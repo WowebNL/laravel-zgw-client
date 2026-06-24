@@ -1,8 +1,0 @@
-{
-    "_comment": "Operations the client exposes that a given ZGW release's spec does NOT define, because they were added in a later release. The request-contract test tolerates these and fails on any NEW, unlisted mismatch (a regression, or a newly published spec dropping an endpoint). The only entry is a genuine version difference: PATCH on /catalogussen was introduced in ZGW 1.6, so it does not exist in 1.5.",
-    "releases": {
-        "1.5": [
-            "catalogi.catalogussen.patch"
-        ]
-    }
-}

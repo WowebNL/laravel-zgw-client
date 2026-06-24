@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api;
 
+use Woweb\Zgw\Api\Endpoints\Catalogi\Besluittypen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Catalogussen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Eigenschappen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Informatieobjecttypen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Resultaattypen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Roltypen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Statustypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Zaakobjecttypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\ZaaktypeInformatieobjecttypen;
 use Woweb\Zgw\Api\Endpoints\Catalogi\Zaaktypen;
 use Woweb\Zgw\Connection\ZgwConnection;
 
@@ -50,5 +53,20 @@ class CatalogiApi
     public function eigenschappen(): Eigenschappen
     {
         return new Eigenschappen($this->connection);
+    }
+
+    public function besluittypen(): Besluittypen
+    {
+        return new Besluittypen($this->connection);
+    }
+
+    public function zaakobjecttypen(): Zaakobjecttypen
+    {
+        return new Zaakobjecttypen($this->connection);
+    }
+
+    public function zaaktypeInformatieobjecttypen(): ZaaktypeInformatieobjecttypen
+    {
+        return new ZaaktypeInformatieobjecttypen($this->connection);
     }
 }

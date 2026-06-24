@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api;
 
+use Woweb\Zgw\Api\Endpoints\Zaken\Klantcontacten;
 use Woweb\Zgw\Api\Endpoints\Zaken\Resultaten;
 use Woweb\Zgw\Api\Endpoints\Zaken\Rollen;
 use Woweb\Zgw\Api\Endpoints\Zaken\Statussen;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaakcontactmomenten;
 use Woweb\Zgw\Api\Endpoints\Zaken\Zaakinformatieobjecten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaaknotities;
 use Woweb\Zgw\Api\Endpoints\Zaken\Zaakobjecten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaakverzoeken;
 use Woweb\Zgw\Api\Endpoints\Zaken\Zaken;
 use Woweb\Zgw\Connection\ZgwConnection;
 
@@ -44,5 +48,25 @@ class ZakenApi
     public function zaakobjecten(): Zaakobjecten
     {
         return new Zaakobjecten($this->connection);
+    }
+
+    public function klantcontacten(): Klantcontacten
+    {
+        return new Klantcontacten($this->connection);
+    }
+
+    public function zaakcontactmomenten(): Zaakcontactmomenten
+    {
+        return new Zaakcontactmomenten($this->connection);
+    }
+
+    public function zaakverzoeken(): Zaakverzoeken
+    {
+        return new Zaakverzoeken($this->connection);
+    }
+
+    public function zaaknotities(): Zaaknotities
+    {
+        return new Zaaknotities($this->connection);
     }
 }

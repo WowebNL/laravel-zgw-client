@@ -7,6 +7,7 @@ namespace Woweb\Zgw\Api\Endpoints\Catalogi;
 use Woweb\Zgw\Api\Actions\Delete;
 use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Patch;
+use Woweb\Zgw\Api\Actions\Publish;
 use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
@@ -17,6 +18,7 @@ class Informatieobjecttypen extends AbstractEndpoint
     use Delete;
     use Index;
     use Patch;
+    use Publish;
     use Put;
     use Show;
     use Store;

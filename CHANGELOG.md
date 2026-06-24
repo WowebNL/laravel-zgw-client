@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `$connection->getVersion()`.
 - `ValidationException` (extends `ApiRequestException`): structured access to a ZGW `ValidatieFout`
   body via `invalidParams()`, `validationCode()`, `title()` and `detail()`.
+- Full endpoint coverage: every operation defined by the ZGW standard (releases 1.5, 1.6, 1.7) is
+  now implemented across all six APIs, enforced as a hard requirement by the contract test suite.
+  New Zaken endpoints (`klantcontacten()`, `zaakcontactmomenten()`, `zaakverzoeken()`,
+  `zaaknotities()`, nested `zaken()->besluiten()`), new Catalogi types (`besluittypen()`,
+  `zaakobjecttypen()`, `zaaktypeInformatieobjecttypen()`), and new actions: `zoek()` search,
+  `publish()`, document `download()`, `audittrailItem()`, `reserveerZaaknummer()`, and `put()` on
+  the resources that support it.
+- Per-version operation guard: calling an operation that the connection's targeted release does not
+  define throws `UnsupportedOperationException` before any request is sent. The available releases
+  per operation live in `OperationAvailability` and are verified against the specs by the contract
+  tests.
 
 ### Changed
 
