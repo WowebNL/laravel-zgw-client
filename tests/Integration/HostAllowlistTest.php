@@ -28,7 +28,7 @@ class HostAllowlistTest extends TestCase
         ]);
 
         try {
-            Zgw::connection('main')->zaken()->zaken()->index();
+            Zgw::connection('main')->zaken()->zaken()->index()->all();
             $this->fail('Expected DisallowedHostException was not thrown.');
         } catch (DisallowedHostException $e) {
             $this->assertStringContainsString('evil.example.com', $e->getMessage());
@@ -110,6 +110,6 @@ class HostAllowlistTest extends TestCase
 
         $this->expectException(DisallowedHostException::class);
 
-        Zgw::connection('main')->zaken()->zaken()->index();
+        Zgw::connection('main')->zaken()->zaken()->index()->all();
     }
 }

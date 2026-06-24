@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api\Endpoints;
 
+use Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\LazyCollection;
 use Woweb\Zgw\Connection\ZgwConnection;
 use Woweb\Zgw\Exceptions\InvalidIdentifierException;
 use Woweb\Zgw\Exceptions\PaginationLimitException;
@@ -50,30 +52,87 @@ abstract class AbstractEndpoint
     }
 
     /**
-     * Fetch all pages for a list endpoint and return a flat Collection.
+     * Fetch a list endpoint as a LazyCollection that follows pagination on demand.
+     *
+     * Iterating the collection drives the HTTP requests one page at a time, so large result sets
+     * are streamed rather than buffered in memory. Because work is deferred, the first request and
+     * any error (a failed response, an untrusted "next" host, the page limit) surface when the
+     * collection is iterated, not when this method returns. Call ->all() or ->collect() to realise
+     * everything eagerly.
+     *
+     * When caching is enabled the pages are realised eagerly to store the result, and the returned
+     * collection iterates that cached array.
      *
      * @param  array<string, mixed>  $params
-     * @return Collection<int, array<string, mixed>>
+     * @return LazyCollection<int, array<string, mixed>>
      */
-    protected function getMany(array $params = []): Collection
+    protected function getMany(array $params = []): LazyCollection
     {
         $url = $this->baseUrl.$this->endpoint;
 
         if ($this->shouldCache) {
-            return Cache::store($this->connection->getCacheStore())->remember(
+            /** @var array<int, array<string, mixed>> $items */
+            $items = Cache::store($this->connection->getCacheStore())->remember(
                 $this->cacheKey($url, $params),
                 $this->cacheTtl,
-                function () use ($url, $params): Collection {
-                    $response = $this->connection->request()->get($url, $params);
-
-                    return $this->getResults($this->zgwResponse->validate($response));
-                }
+                fn (): array => $this->paginate($url, $params)->all(),
             );
+
+            return LazyCollection::make($items);
         }
 
-        $response = $this->connection->request()->get($url, $params);
+        return $this->paginate($url, $params);
+    }
 
-        return $this->getResults($this->zgwResponse->validate($response));
+    /**
+     * Lazily yield every result item across all pages, following "next" links.
+     *
+     * @param  array<string, mixed>  $params
+     * @return LazyCollection<int, array<string, mixed>>
+     */
+    protected function paginate(string $url, array $params): LazyCollection
+    {
+        return LazyCollection::make(function () use ($url, $params): Generator {
+            $response = $this->zgwResponse->validate($this->connection->request()->get($url, $params));
+            yield from $this->mapResults($response['results'] ?? []);
+
+            $maxPages = $this->connection->getMaxPages();
+            $page = 1;
+
+            while (! empty($response['next'])) {
+                if (++$page > $maxPages) {
+                    throw new PaginationLimitException(
+                        "ZGW pagination exceeded the configured maximum of [{$maxPages}] pages. ".
+                        'Increase [max_pages] for this connection or narrow the query with filters.'
+                    );
+                }
+
+                $this->connection->assertUrlAllowed($response['next']);
+
+                $response = $this->zgwResponse->validate(
+                    $this->connection->request()->get($response['next'])
+                );
+
+                yield from $this->mapResults($response['results'] ?? []);
+            }
+        });
+    }
+
+    /**
+     * Normalise each result item, deriving a `uuid` from the `url` field when absent.
+     *
+     * @param  array<int, array<string, mixed>>  $results
+     * @return Generator<int, array<string, mixed>>
+     */
+    private function mapResults(array $results): Generator
+    {
+        foreach ($results as $item) {
+            if (! isset($item['uuid']) && isset($item['url'])) {
+                $item['uuid'] = substr($item['url'], strrpos($item['url'], '/') + 1);
+            }
+
+            yield $item;
+        }
     }
 
     /**
@@ -104,41 +163,10 @@ abstract class AbstractEndpoint
     }
 
     /**
-     * Collect all paginated results into a flat Collection by following 'next' links iteratively.
-     *
-     * @param  array<string, mixed>  $response
-     * @return Collection<int, array<string, mixed>>
-     */
-    protected function getResults(array $response): Collection
-    {
-        $results = $response['results'] ?? [];
-
-        $maxPages = $this->connection->getMaxPages();
-        $page = 1;
-
-        while (! empty($response['next'])) {
-            if (++$page > $maxPages) {
-                throw new PaginationLimitException(
-                    "ZGW pagination exceeded the configured maximum of [{$maxPages}] pages. ".
-                    'Increase [max_pages] for this connection or narrow the query with filters.'
-                );
-            }
-
-            $this->connection->assertUrlAllowed($response['next']);
-
-            $nextResponse = $this->connection->request()
-                ->get($response['next']);
-
-            $response = $this->zgwResponse->validate($nextResponse);
-            $results = array_merge($results, $response['results'] ?? []);
-        }
-
-        return $this->createCollection($results);
-    }
-
-    /**
      * Transform a flat array of result items into a Collection.
      * When an item has no `uuid` key, the UUID is extracted from the `url` field.
+     *
+     * Used for non-paginated list responses such as audit trails.
      *
      * @param  array<int, array<string, mixed>>  $results
      * @return Collection<int, array<string, mixed>>

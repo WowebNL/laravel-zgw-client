@@ -1,0 +1,70 @@
+name: ZGW spec watch
+
+# Weekly check for newly published VNG ZGW OpenAPI specs. Because gemma-zaken does not use GitHub
+# Releases for the standard, the signal is a new version folder under api-specificatie. When one
+# appears, this workflow opens an issue and a draft PR that wires it into the contract test matrix.
+
+on:
+  schedule:
+    # Mondays at 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Detect new specs
+        id: detect
+        run: |
+          php scripts/check-new-specs.php | tee detect.out
+          COUNT=$(grep -oE 'added_count=[0-9]+' detect.out | cut -d= -f2)
+          echo "count=${COUNT:-0}" >> "$GITHUB_OUTPUT"
+
+      - name: Open issue and draft PR
+        if: steps.detect.outputs.count != '0'
+        run: |
+          set -euo pipefail
+
+          BRANCH="zgw-spec-update-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+
+          # Update the snapshot, scaffold releases.json, and write the report body.
+          php scripts/check-new-specs.php --apply
+
+          git add .github/zgw-spec-snapshot.json tests/Contract/releases.json
+          git commit -m "Track newly published ZGW OpenAPI specs"
+          git push origin "$BRANCH"
+
+          # Open a draft PR wiring the new versions into the matrix.
+          gh pr create \
+            --draft \
+            --base main \
+            --head "$BRANCH" \
+            --title "Add newly published ZGW specs to the contract matrix" \
+            --body-file build/new-specs-report.md
+
+          # Open a tracking issue, unless one is already open.
+          if [ -z "$(gh issue list --state open --search 'in:title New ZGW spec versions detected' --json number --jq '.[0].number')" ]; then
+            gh issue create \
+              --title "New ZGW spec versions detected" \
+              --body-file build/new-specs-report.md
+          fi

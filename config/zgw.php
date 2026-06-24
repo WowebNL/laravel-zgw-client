@@ -21,8 +21,10 @@ return [
     | credentials used for authorization. Multiple connections are supported,
     | following the same pattern as Laravel's database connections.
     |
-    | API base URLs should point to the root of the API host so that the package
-    | can append the correct path per API, e.g. "https://example.com/".
+    | Each URL is the full base URL of that API, including the version path, taken straight from
+    | the environment. This supports any deployment topology: OpenZaak's single-host layout
+    | ("https://openzaak.example.com/zaken/api/v1/") as well as one host per API
+    | ("https://zaken-api.example.com/api/v1/").
     |
     */
     'connections' => [
@@ -30,15 +32,24 @@ return [
         'main' => [
 
             /*
-            | Base URLs per ZGW API. Each value is the URL up to and including
-            | the trailing slash, e.g. "https://openzaak.example.com/".
+            | Full base URL per ZGW API, including the version path and a trailing slash,
+            | e.g. "https://openzaak.example.com/zaken/api/v1/". Only configure the APIs you use.
             */
             'urls' => [
                 'zaken' => env('ZGW_ZAKEN_BASE_URL', ''),
                 'catalogi' => env('ZGW_CATALOGI_BASE_URL', ''),
                 'documenten' => env('ZGW_DOCUMENTEN_BASE_URL', ''),
                 'besluiten' => env('ZGW_BESLUITEN_BASE_URL', ''),
+                'autorisaties' => env('ZGW_AUTORISATIES_BASE_URL', ''),
+                'notificaties' => env('ZGW_NOTIFICATIES_BASE_URL', ''),
             ],
+
+            /*
+            | The ZGW standard release this connection targets: "1.5", "1.6" or "1.7".
+            | Exposed via $connection->getVersion() so calling code can branch on the version.
+            | Defaults to the latest supported release.
+            */
+            'version' => env('ZGW_VERSION', '1.7'),
 
             /*
             | JWT credentials for this connection.

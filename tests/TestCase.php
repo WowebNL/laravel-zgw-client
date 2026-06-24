@@ -19,11 +19,14 @@ abstract class TestCase extends OrchestraTestCase
         $app['config']->set('zgw.default', 'main');
         $app['config']->set('zgw.connections.main', [
             'urls' => [
-                'zaken' => 'https://zaken.example.com/',
-                'catalogi' => 'https://catalogi.example.com/',
-                'documenten' => 'https://documenten.example.com/',
-                'besluiten' => 'https://besluiten.example.com/',
+                'zaken' => 'https://zaken.example.com/zaken/api/v1/',
+                'catalogi' => 'https://catalogi.example.com/catalogi/api/v1/',
+                'documenten' => 'https://documenten.example.com/documenten/api/v1/',
+                'besluiten' => 'https://besluiten.example.com/besluiten/api/v1/',
+                'autorisaties' => 'https://autorisaties.example.com/autorisaties/api/v1/',
+                'notificaties' => 'https://notificaties.example.com/notificaties/api/v1/',
             ],
+            'version' => '1.7',
             'client_id' => 'test-client',
             'client_secret' => 'test-secret-with-sufficient-entropy-0123456789',
             'user_id' => 'test-user',

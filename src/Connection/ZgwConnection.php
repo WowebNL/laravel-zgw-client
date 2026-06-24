@@ -6,12 +6,15 @@ namespace Woweb\Zgw\Connection;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Woweb\Zgw\Api\AutorisatiesApi;
 use Woweb\Zgw\Api\BesluitenApi;
 use Woweb\Zgw\Api\CatalogiApi;
 use Woweb\Zgw\Api\DocumentenApi;
+use Woweb\Zgw\Api\NotificatiesApi;
 use Woweb\Zgw\Api\ZakenApi;
 use Woweb\Zgw\Auth\ClientSecretValidator;
 use Woweb\Zgw\Contracts\AuthorizationInterface;
+use Woweb\Zgw\Enums\ZgwVersion;
 use Woweb\Zgw\Exceptions\DisallowedHostException;
 use Woweb\Zgw\Exceptions\InvalidConfigurationException;
 
@@ -30,8 +33,11 @@ readonly class ZgwConnection
     }
 
     /**
-     * Return the base URL for the given API name.
-     * The URL is resolved as: urls.{api} + {api}/api/v1/
+     * Return the configured base URL for the given API name.
+     *
+     * The value is the full base URL of the API, including the version path, e.g.
+     * "https://openzaak.example.com/zaken/api/v1/" or "https://zaken-api.example.com/api/v1/".
+     * A trailing slash is ensured; no path is appended, so any deployment topology is supported.
      *
      * Throws if the base URL is not configured.
      */
@@ -47,7 +53,19 @@ readonly class ZgwConnection
             );
         }
 
-        return rtrim($base, '/').'/'.$api.'/api/v1/';
+        return rtrim($base, '/').'/';
+    }
+
+    /**
+     * The ZGW standard release this connection targets (defaults to the latest supported).
+     */
+    public function getVersion(): ZgwVersion
+    {
+        $version = $this->config['version'] ?? null;
+
+        return $version === null
+            ? ZgwVersion::latest()
+            : ZgwVersion::fromConfig((string) $version);
     }
 
     /**
@@ -247,5 +265,15 @@ readonly class ZgwConnection
     public function besluiten(): BesluitenApi
     {
         return new BesluitenApi($this);
+    }
+
+    public function autorisaties(): AutorisatiesApi
+    {
+        return new AutorisatiesApi($this);
+    }
+
+    public function notificaties(): NotificatiesApi
+    {
+        return new NotificatiesApi($this);
     }
 }
