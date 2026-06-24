@@ -1,0 +1,38 @@
+{
+    "_comment": "Maps each supported ZGW standard release to the per-component OpenAPI spec versions and the exact, verified URL of each component's openapi.yaml. Component versions are independent of the umbrella release number. The release watcher keeps this file up to date.",
+    "releases": {
+        "1.5": {
+            "label": "ZGW 1.5",
+            "components": {
+                "zaken":      { "version": "1.5.1", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/zrc/1.5.x/1.5.1/openapi.yaml" },
+                "catalogi":   { "version": "1.3.1", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/ztc/1.3.x/1.3.1/openapi.yaml" },
+                "documenten": { "version": "1.5.0", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/drc/1.5.x/1.5.0/openapi.yaml" },
+                "besluiten":  { "version": "1.0.2", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/brc/1.0.2/openapi.yaml" },
+                "autorisaties": { "version": "1.0.0", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/autorisaties/ac/1.0.x/1.0.0/openapi.yaml" },
+                "notificaties": { "version": "1.0.1", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/notificaties/nrc/1.0.1/openapi.yaml" }
+            }
+        },
+        "1.6": {
+            "label": "ZGW 1.6",
+            "components": {
+                "zaken":      { "version": "1.6.0", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/zrc/1.6.x/1.6.0/openapi.yaml" },
+                "catalogi":   { "version": "1.3.2", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/catalogi/ztc/1.3.x/1.3.2/openapi.yaml" },
+                "documenten": { "version": "1.6.0", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/documenten/drc/1.6.x/1.6.0/openapi.yaml" },
+                "besluiten":  { "version": "1.1.0", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/brc/1.1.x/openapi.yaml" },
+                "autorisaties": { "version": "1.0.0", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/autorisaties/ac/1.0.x/1.0.0/openapi.yaml" },
+                "notificaties": { "version": "1.0.1", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/notificaties/nrc/1.0.1/openapi.yaml" }
+            }
+        },
+        "1.7": {
+            "label": "ZGW 1.7",
+            "components": {
+                "zaken":      { "version": "1.7.0", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/zaken/zrc/1.7.x/1.7.0/openapi.yaml" },
+                "catalogi":   { "version": "1.3.3", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/catalogi/ztc/1.3.x/1.3.3/openapi.yaml" },
+                "documenten": { "version": "1.7.0", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/documenten/drc/1.7.x/1.7.0/openapi.yaml" },
+                "besluiten":  { "version": "1.1.0", "url": "https://raw.githubusercontent.com/VNG-Realisatie/gemma-zaken/master/api-specificatie/brc/1.1.x/openapi.yaml" },
+                "autorisaties": { "version": "1.1.0", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/autorisaties/ac/1.1.x/1.1.0/openapi.yaml" },
+                "notificaties": { "version": "1.0.1", "url": "https://vng-realisatie.github.io/gemma-zaken/standaard/notificaties/nrc/1.0.1/openapi.yaml" }
+            }
+        }
+    }
+}

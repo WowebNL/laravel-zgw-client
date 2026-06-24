@@ -20,7 +20,8 @@
         "larastan/larastan": "^2.0|^3.0",
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^9.0|^10.0|^11.0",
-        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+        "phpunit/phpunit": "^10.0|^11.0|^12.0",
+        "symfony/yaml": "^6.4|^7.0|^8.0"
     },
     "autoload": {
         "psr-4": {
@@ -45,7 +46,16 @@
     "scripts": {
         "test": "@php vendor/bin/phpunit",
         "test:coverage": "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-text",
-        "test:coverage-html": "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-html coverage"
+        "test:coverage-html": "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-html coverage",
+        "contract:fetch": "@php scripts/fetch-specs.php",
+        "contract": [
+            "@contract:fetch",
+            "@php vendor/bin/phpunit --testsuite Contract"
+        ],
+        "contract:coverage": [
+            "@contract:fetch",
+            "@php vendor/bin/phpunit tests/Contract/CoverageReportTest.php"
+        ]
     },
     "config": {
         "optimize-autoloader": true,

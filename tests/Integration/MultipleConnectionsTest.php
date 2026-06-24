@@ -17,10 +17,10 @@ class MultipleConnectionsTest extends TestCase
 
         $app['config']->set('zgw.connections.secondary', [
             'urls' => [
-                'zaken' => 'https://zaken2.example.com/',
-                'catalogi' => 'https://catalogi2.example.com/',
-                'documenten' => 'https://documenten2.example.com/',
-                'besluiten' => 'https://besluiten2.example.com/',
+                'zaken' => 'https://zaken2.example.com/zaken/api/v1/',
+                'catalogi' => 'https://catalogi2.example.com/catalogi/api/v1/',
+                'documenten' => 'https://documenten2.example.com/documenten/api/v1/',
+                'besluiten' => 'https://besluiten2.example.com/besluiten/api/v1/',
             ],
             'client_id' => 'secondary-client',
             'client_secret' => 'secondary-secret-with-sufficient-entropy-0123',

@@ -148,7 +148,7 @@ class ZakenApiTest extends TestCase
 
         $this->expectException(ApiRequestException::class);
 
-        Zgw::connection('main')->zaken()->zaken()->index();
+        Zgw::connection('main')->zaken()->zaken()->index()->all();
     }
 
     public function test_delete_failure_throws_with_response(): void
@@ -176,7 +176,7 @@ class ZakenApiTest extends TestCase
         ]);
 
         try {
-            Zgw::connection('main')->zaken()->zaken()->index();
+            Zgw::connection('main')->zaken()->zaken()->index()->all();
             $this->fail('Expected ApiRequestException was not thrown.');
         } catch (ApiRequestException $e) {
             // The status code is in the message, but the (potentially PII-bearing) body is not.

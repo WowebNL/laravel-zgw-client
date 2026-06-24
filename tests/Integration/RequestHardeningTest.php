@@ -43,7 +43,7 @@ class RequestHardeningTest extends TestCase
             ]),
         ]);
 
-        Zgw::connection('main')->zaken()->zaken()->index();
+        Zgw::connection('main')->zaken()->zaken()->index()->all();
 
         Http::assertSent(fn ($request) => $request->hasHeader('Authorization')
             && str_starts_with($request->header('Authorization')[0], 'Bearer '));
@@ -67,7 +67,7 @@ class RequestHardeningTest extends TestCase
 
         $this->expectException(PaginationLimitException::class);
 
-        Zgw::connection('main')->zaken()->zaken()->index();
+        Zgw::connection('main')->zaken()->zaken()->index()->all();
     }
 
     public function test_max_pages_falls_back_to_default(): void

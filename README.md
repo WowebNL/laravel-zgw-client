@@ -1,6 +1,6 @@
 # Laravel ZGW client
 
-Laravel package for interacting with the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten and Besluiten.
+Laravel package for interacting with the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten, Besluiten, Autorisaties and Notificaties. It supports the ZGW standard releases 1.5, 1.6 and 1.7.
 
 **Requirements:** PHP 8.2+, Laravel 12 or 13, firebase/php-jwt 7
 
@@ -30,11 +30,14 @@ Add the following to your `.env`:
 
 ```dotenv
 ZGW_CONNECTION=main
+ZGW_VERSION=1.7
 
-ZGW_ZAKEN_BASE_URL=https://openzaak.example.com/
-ZGW_CATALOGI_BASE_URL=https://openzaak.example.com/
-ZGW_DOCUMENTEN_BASE_URL=https://openzaak.example.com/
-ZGW_BESLUITEN_BASE_URL=https://openzaak.example.com/
+ZGW_ZAKEN_BASE_URL=https://openzaak.example.com/zaken/api/v1/
+ZGW_CATALOGI_BASE_URL=https://openzaak.example.com/catalogi/api/v1/
+ZGW_DOCUMENTEN_BASE_URL=https://openzaak.example.com/documenten/api/v1/
+ZGW_BESLUITEN_BASE_URL=https://openzaak.example.com/besluiten/api/v1/
+ZGW_AUTORISATIES_BASE_URL=https://openzaak.example.com/autorisaties/api/v1/
+ZGW_NOTIFICATIES_BASE_URL=https://openzaak.example.com/notificaties/api/v1/
 
 ZGW_CLIENT_ID=your-client-id
 ZGW_CLIENT_SECRET=your-client-secret
@@ -42,7 +45,7 @@ ZGW_USER_ID=your-user-id
 ZGW_USER_REPRESENTATION=Your Name
 ```
 
-Base URLs point at the host root. The package appends the correct path per API, for example `{base}/zaken/api/v1/`. Each ZGW API may live on the same host or on separate hosts, depending on your provider.
+Each base URL is the full URL of that API, including the version path and a trailing slash. This supports any deployment topology: OpenZaak's single host (`https://openzaak.example.com/zaken/api/v1/`) as well as one host per API (`https://zaken-api.example.com/api/v1/`). Only configure the APIs you use. `ZGW_VERSION` records which ZGW standard release the connection targets (`1.5`, `1.6` or `1.7`); see [Version awareness](#version-awareness).
 
 > **Important:** the `client_secret` is the HS256 signing key, so it must be at least 32 bytes. This floor is enforced twice: the package validates the secret when a connection is built (throwing `WeakSecretException`), and `firebase/php-jwt` 7 refuses to sign with a shorter key (`DomainException: Provided key is too short`). The default `secret_rules.min_length` of 32 matches that floor. You can relax the package rules per connection, but no setting can take an HS256 secret below 32 bytes. See [Secret strength](#secret-strength).
 
@@ -52,7 +55,8 @@ Every key below lives inside a connection (the `main` connection by default). Al
 
 | Key | Env | Default | Purpose |
 |---|---|---|---|
-| `urls.zaken` etc. | `ZGW_*_BASE_URL` | `''` | Host root per ZGW API. |
+| `urls.zaken` etc. | `ZGW_*_BASE_URL` | `''` | Full base URL per ZGW API, including the version path (`zaken`, `catalogi`, `documenten`, `besluiten`, `autorisaties`, `notificaties`). |
+| `version` | `ZGW_VERSION` | `1.7` | ZGW standard release the connection targets (`1.5`, `1.6`, `1.7`). |
 | `client_id` | `ZGW_CLIENT_ID` | `''` | JWT `client_id` / `iss`. Issued by your provider. |
 | `client_secret` | `ZGW_CLIENT_SECRET` | `''` | HS256 signing secret. Issued by your provider. |
 | `user_id` | `ZGW_USER_ID` | `''` | JWT `user_id` claim. |
@@ -75,7 +79,7 @@ The top-level `default` key (`ZGW_CONNECTION`, default `main`) selects which con
 
 ## Usage
 
-The package registers `ZgwManager` in the service container. Reach it through the `Zgw` facade or through dependency injection. The fluent chain is always `connection()` then an API (`zaken()`, `catalogi()`, `documenten()`, `besluiten()`) then an endpoint then an action.
+The package registers `ZgwManager` in the service container. Reach it through the `Zgw` facade or through dependency injection. The fluent chain is always `connection()` then an API (`zaken()`, `catalogi()`, `documenten()`, `besluiten()`, `autorisaties()`, `notificaties()`) then an endpoint then an action.
 
 ### Via the Zgw facade
 
@@ -117,14 +121,14 @@ $eigenschappen = Zgw::connection('main')->zaken()->zaken()->zaakeigenschappen('z
 `ZgwManager` can be injected directly. The default connection is used when no name is passed to `connection()`.
 
 ```php
-use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Woweb\Zgw\ZgwManager;
 
 class ZaakService
 {
     public function __construct(private readonly ZgwManager $zgw) {}
 
-    public function getZaken(): Collection
+    public function getZaken(): LazyCollection
     {
         return $this->zgw->connection()->zaken()->zaken()->index();
     }
@@ -139,23 +143,37 @@ class ZaakService
 | `->catalogi()` | Catalogi API v1 | `catalogussen()`, `zaaktypen()`, `informatieobjecttypen()`, `roltypen()`, `statustypen()`, `resultaattypen()`, `eigenschappen()` |
 | `->documenten()` | Documenten API v1 | `enkelvoudiginformatieobjecten()`, `gebruiksrechten()`, `objectinformatieobjecten()`, `verzendingen()`, `bestandsdelen()` |
 | `->besluiten()` | Besluiten API v1 | `besluiten()`, `besluitinformatieobjecten()` |
+| `->autorisaties()` | Autorisaties API v1 | `applicaties()` |
+| `->notificaties()` | Notificaties API v1 | `abonnementen()`, `kanalen()`, `notificaties()` |
 
 ### Available actions per endpoint
 
 | Method | HTTP | Returns | Description |
 |---|---|---|---|
-| `index(array $params = [])` | GET | `Collection` | Fetch all resources, auto-paginating. `$params` become query filters. |
+| `index(array $params = [])` | GET | `LazyCollection` | List resources, paginating on demand. `$params` become query filters. |
 | `show(string $uuid, array $expand = [])` | GET | `array` | Fetch a single resource. |
 | `store(array $params)` | POST | `array` | Create a resource. |
 | `patch(string $uuid, array $params)` | PATCH | `array` | Partial update. |
 | `put(string $uuid, array $params)` | PUT | `array` | Full replace. |
 | `delete(string $uuid)` | DELETE | `bool` | Delete a resource. Returns `true` on HTTP 204. |
 
-Not every endpoint implements every action. `bestandsdelen()`, for example, only exposes `put()`. Some endpoints add resource-specific methods (see [Document operations](#document-operations)).
+Not every endpoint implements every action; each endpoint only mixes in the actions the ZGW API actually supports for that resource. A `status` and a `rol`, for example, cannot be updated, and `bestandsdelen()` only exposes `put()`. Some endpoints add resource-specific methods (see [Document operations](#document-operations), [Autorisaties and Notificaties](#autorisaties-and-notificaties)).
 
 ### Pagination
 
-`index()` auto-paginates. It follows the `next` link the API returns and merges every page into one `Collection`. When a result item has no `uuid` key, the UUID is derived from its `url` field for convenience. The number of pages followed is bounded by `max_pages` (see [Pagination limit](#pagination-limit)).
+`index()` returns a [LazyCollection](https://laravel.com/docs/collections#lazy-collections) that follows the API's `next` links on demand. Iterating the collection drives the HTTP requests one page at a time, so a large result set is streamed instead of being buffered in memory, and `->take(n)` stops fetching as soon as it has enough. When a result item has no `uuid` key, the UUID is derived from its `url` field. The number of pages followed is bounded by `max_pages` (see [Pagination limit](#pagination-limit)).
+
+```php
+// Streams pages as you iterate; only the pages needed are fetched.
+foreach (Zgw::connection('main')->zaken()->zaken()->index(['rol__betrokkeneType' => 'natuurlijk_persoon']) as $zaak) {
+    // ...
+}
+
+// Realise everything eagerly into a Collection (and trigger any error now):
+$all = Zgw::connection('main')->zaken()->zaken()->index()->collect();
+```
+
+Because the work is deferred, the first request and any error (a failed response, an untrusted `next` host, the page limit) surface while the collection is iterated, not when `index()` returns. Call `->all()` or `->collect()` to force this immediately. When `->cache()` is used, the pages are realised eagerly so the result can be stored.
 
 ### Document operations
 
@@ -178,6 +196,59 @@ $trail = $doc->audittrail('document-uuid');
 ```
 
 `besluiten()` also exposes `audittrail('besluit-uuid')`.
+
+### Autorisaties and Notificaties
+
+The Autorisaties API manages the `applicaties` that hold authorisations, plus a lookup by client id.
+
+```php
+$applicaties = Zgw::connection('main')->autorisaties();
+
+$applicaties->applicaties()->index();                 // list applicaties (LazyCollection)
+$applicaties->applicaties()->store([/* ... */]);      // register an applicatie
+$applicaties->applicaties()->consumer('your-client'); // the applicatie for a given client id
+```
+
+The Notificaties API manages subscriptions (`abonnementen`), channels (`kanalen`) and publishing a notification.
+
+```php
+$nrc = Zgw::connection('main')->notificaties();
+
+// Subscribe to events
+$nrc->abonnementen()->store([
+    'callbackUrl' => 'https://your-app.example.com/zgw/webhook',
+    'auth'        => 'Bearer your-callback-token',
+    'kanalen'     => [['naam' => 'zaken', 'filters' => []]],
+]);
+
+// List channels (create + read only)
+$nrc->kanalen()->index();
+
+// Publish a notification
+$nrc->notificaties()->send([
+    'kanaal'     => 'zaken',
+    'hoofdObject'=> 'https://openzaak.example.com/zaken/api/v1/zaken/uuid',
+    'resource'   => 'status',
+    'actie'      => 'create',
+    'aanmaakdatum' => '2024-01-01T12:00:00Z',
+]);
+```
+
+### Version awareness
+
+A connection records which ZGW standard release it targets (`version` config, env `ZGW_VERSION`, default `1.7`). It is exposed as a `ZgwVersion` enum so calling code can branch on it; an unsupported value throws `InvalidConfigurationException`.
+
+```php
+use Woweb\Zgw\Enums\ZgwVersion;
+
+$version = Zgw::connection('main')->getVersion();   // ZgwVersion::V1_7
+
+if ($version->isAtLeast(ZgwVersion::V1_6)) {
+    // use functionality introduced in ZGW 1.6
+}
+```
+
+The package surface is shared across releases. The version is informational: it does not change which endpoints are available, but lets your application adapt to the provider it talks to. The package is validated against the OpenAPI specs of releases 1.5, 1.6 and 1.7 (see [Testing](#testing)).
 
 ### Multiple connections
 
@@ -286,6 +357,25 @@ try {
 }
 ```
 
+### Validation errors
+
+When a write is rejected with a structured ZGW `ValidatieFout` body (an `invalidParams` array, typically HTTP 400), a `ValidationException` is thrown instead. It extends `ApiRequestException`, so existing handlers keep working, and adds typed access to the per-field failures without exposing the body in the (auto-logged) message.
+
+```php
+use Woweb\Zgw\Exceptions\ValidationException;
+
+try {
+    Zgw::connection('main')->zaken()->zaken()->store($payload);
+} catch (ValidationException $e) {
+    $e->validationCode();   // top-level ZGW code, e.g. "invalid"
+    $e->title();            // e.g. "Invalid input."
+
+    foreach ($e->invalidParams() as $param) {
+        // $param->name, $param->code, $param->reason
+    }
+}
+```
+
 ### Exception reference
 
 All exceptions extend `Woweb\Zgw\Exceptions\ZgwException`, so you can catch the base class to handle any package error.
@@ -293,9 +383,10 @@ All exceptions extend `Woweb\Zgw\Exceptions\ZgwException`, so you can catch the 
 | Exception | Thrown when |
 |---|---|
 | `ApiRequestException` | The provider returned an error status, or a delete did not return 204. Carries the response via `getResponse()`. |
+| `ValidationException` | A write was rejected with a structured `ValidatieFout` body. Extends `ApiRequestException`; adds `invalidParams()`, `validationCode()`, `title()`, `detail()`. |
 | `AuthorizationException` | `client_id` or `client_secret` is empty when a token is minted. |
 | `WeakSecretException` | The `client_secret` does not meet the configured strength rules. |
-| `InvalidConfigurationException` | A connection or a base URL is not configured. |
+| `InvalidConfigurationException` | A connection or a base URL is not configured, or the `version` is not a supported ZGW release. |
 | `DisallowedHostException` | A `next` link or direct URL targets an origin that is not on the allowlist. |
 | `PaginationLimitException` | Auto-pagination exceeded `max_pages`. |
 | `InvalidIdentifierException` | A resource identifier contained characters that are not allowed in a URL segment. |

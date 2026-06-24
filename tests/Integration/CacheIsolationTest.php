@@ -19,7 +19,7 @@ class CacheIsolationTest extends TestCase
         // A second connection to the same host but with a different credential (client_id).
         $app['config']->set('zgw.connections.other', [
             'urls' => [
-                'zaken' => 'https://zaken.example.com/',
+                'zaken' => 'https://zaken.example.com/zaken/api/v1/',
             ],
             'client_id' => 'other-client',
             'client_secret' => 'other-secret-with-sufficient-entropy-0123456789',

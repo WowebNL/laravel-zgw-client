@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api\Actions;
 
-use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 
 trait Index
 {
     /**
-     * Fetch all resources for this endpoint (auto-paginates).
+     * List the resources for this endpoint as a LazyCollection that paginates on demand.
+     *
+     * Iterating the result drives the HTTP requests page by page, so large sets are streamed
+     * instead of buffered. Errors and the first request surface during iteration; call ->all()
+     * or ->collect() to realise everything (and trigger any error) eagerly.
      *
      * @param  array<string, mixed>  $params  Optional query parameters / filters.
-     * @return Collection<int, array<string, mixed>>
+     * @return LazyCollection<int, array<string, mixed>>
      */
-    public function index(array $params = []): Collection
+    public function index(array $params = []): LazyCollection
     {
         return $this->getMany($params);
     }
