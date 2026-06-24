@@ -14,6 +14,8 @@ trait Show
      */
     public function show(string $uuid, array $expand = []): array
     {
+        $this->assertSupported('GET', $this->itemTemplate());
+
         return $this->getSingle($uuid, $expand);
     }
 }

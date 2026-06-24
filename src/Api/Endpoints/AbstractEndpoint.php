@@ -11,7 +11,9 @@ use Illuminate\Support\LazyCollection;
 use Woweb\Zgw\Connection\ZgwConnection;
 use Woweb\Zgw\Exceptions\InvalidIdentifierException;
 use Woweb\Zgw\Exceptions\PaginationLimitException;
+use Woweb\Zgw\Exceptions\UnsupportedOperationException;
 use Woweb\Zgw\Response\ZgwResponse;
+use Woweb\Zgw\Versioning\OperationAvailability;
 
 abstract class AbstractEndpoint
 {
@@ -20,6 +22,13 @@ abstract class AbstractEndpoint
 
     /** Endpoint path segment within the API, e.g. "zaken". */
     protected string $endpoint = '';
+
+    /**
+     * The OpenAPI path template for this endpoint's collection, e.g. "/zaken" or
+     * "/zaken/{uuid}/zaakeigenschappen". Defaults to "/{endpoint}". Nested endpoints override it.
+     * Used for per-version availability checks.
+     */
+    protected string $pathTemplate = '';
 
     protected string $baseUrl = '';
 
@@ -35,6 +44,39 @@ abstract class AbstractEndpoint
             $this->baseUrl = $connection->getBaseUrl($this->apiName);
         }
         $this->zgwResponse = new ZgwResponse;
+    }
+
+    /**
+     * The collection path template for this endpoint (e.g. "/zaken").
+     */
+    protected function collectionTemplate(): string
+    {
+        return $this->pathTemplate !== '' ? $this->pathTemplate : '/'.$this->endpoint;
+    }
+
+    /**
+     * The single-resource path template for this endpoint (e.g. "/zaken/{uuid}").
+     */
+    protected function itemTemplate(): string
+    {
+        return $this->collectionTemplate().'/{uuid}';
+    }
+
+    /**
+     * Assert that the given operation is defined in the release this connection targets.
+     *
+     * @throws UnsupportedOperationException
+     */
+    protected function assertSupported(string $method, string $pathTemplate): void
+    {
+        $version = $this->connection->getVersion();
+
+        if (! OperationAvailability::isAvailable($this->apiName, $method, $pathTemplate, $version)) {
+            throw new UnsupportedOperationException(
+                "The operation [{$method} {$pathTemplate}] is not available in {$version->label()}. ".
+                'Configure the connection for a release that supports it.'
+            );
+        }
     }
 
     /**
@@ -82,6 +124,41 @@ abstract class AbstractEndpoint
         }
 
         return $this->paginate($url, $params);
+    }
+
+    /**
+     * Lazily paginate a search (_zoek) endpoint: the first page is a POST with the search body,
+     * subsequent pages follow the "next" links with GET.
+     *
+     * @param  array<string, mixed>  $body
+     * @return LazyCollection<int, array<string, mixed>>
+     */
+    protected function searchPaginate(string $url, array $body): LazyCollection
+    {
+        return LazyCollection::make(function () use ($url, $body): Generator {
+            $response = $this->zgwResponse->validate($this->connection->request()->post($url, $body));
+            yield from $this->mapResults($response['results'] ?? []);
+
+            $maxPages = $this->connection->getMaxPages();
+            $page = 1;
+
+            while (! empty($response['next'])) {
+                if (++$page > $maxPages) {
+                    throw new PaginationLimitException(
+                        "ZGW pagination exceeded the configured maximum of [{$maxPages}] pages. ".
+                        'Increase [max_pages] for this connection or narrow the query with filters.'
+                    );
+                }
+
+                $this->connection->assertUrlAllowed($response['next']);
+
+                $response = $this->zgwResponse->validate(
+                    $this->connection->request()->get($response['next'])
+                );
+
+                yield from $this->mapResults($response['results'] ?? []);
+            }
+        });
     }
 
     /**

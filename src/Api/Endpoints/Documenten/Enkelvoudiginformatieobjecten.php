@@ -4,19 +4,25 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api\Endpoints\Documenten;
 
-use Illuminate\Support\Collection;
+use Woweb\Zgw\Api\Actions\Audittrail;
+use Woweb\Zgw\Api\Actions\Delete;
 use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Patch;
 use Woweb\Zgw\Api\Actions\Put;
+use Woweb\Zgw\Api\Actions\Search;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Exceptions\ApiRequestException;
 
 class Enkelvoudiginformatieobjecten extends AbstractEndpoint
 {
+    use Audittrail;
+    use Delete;
     use Index;
     use Patch;
     use Put;
+    use Search;
     use Show;
     use Store;
 
@@ -56,18 +62,25 @@ class Enkelvoudiginformatieobjecten extends AbstractEndpoint
     }
 
     /**
-     * Retrieve the audit trail for a document.
+     * Download the binary content of a document.
      *
-     * @return Collection<int, array<string, mixed>>
+     * @throws ApiRequestException
      */
-    public function audittrail(string $uuid): Collection
+    public function download(string $uuid): string
     {
-        $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/audittrail';
+        $this->assertSupported('GET', $this->itemTemplate().'/download');
+
+        $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/download';
         $response = $this->connection->request()->get($url);
 
-        /** @var array<int, array<string, mixed>> $items */
-        $items = $this->zgwResponse->validate($response);
+        if ($response->failed()) {
+            throw new ApiRequestException(
+                "ZGW API request failed [{$response->status()}].",
+                $response,
+                $response->status(),
+            );
+        }
 
-        return $this->createCollection($items);
+        return $response->body();
     }
 }

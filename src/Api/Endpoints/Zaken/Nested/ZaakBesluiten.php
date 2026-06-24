@@ -6,19 +6,16 @@ namespace Woweb\Zgw\Api\Endpoints\Zaken\Nested;
 
 use Woweb\Zgw\Api\Actions\Delete;
 use Woweb\Zgw\Api\Actions\Index;
-use Woweb\Zgw\Api\Actions\Patch;
-use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Connection\ZgwConnection;
 
-class Zaakeigenschappen extends AbstractEndpoint
+// The besluiten linked to a specific zaak. A relation resource: create, read and delete.
+class ZaakBesluiten extends AbstractEndpoint
 {
     use Delete;
     use Index;
-    use Patch;
-    use Put;
     use Show;
     use Store;
 
@@ -26,11 +23,11 @@ class Zaakeigenschappen extends AbstractEndpoint
 
     protected string $endpoint = '';
 
-    protected string $pathTemplate = '/zaken/{uuid}/zaakeigenschappen';
+    protected string $pathTemplate = '/zaken/{uuid}/besluiten';
 
     public function __construct(ZgwConnection $connection, string $zaakUuid)
     {
         parent::__construct($connection);
-        $this->endpoint = 'zaken/'.$this->encodeId($zaakUuid).'/zaakeigenschappen';
+        $this->endpoint = 'zaken/'.$this->encodeId($zaakUuid).'/besluiten';
     }
 }

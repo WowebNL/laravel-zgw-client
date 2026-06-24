@@ -15,8 +15,8 @@ use Woweb\Zgw\Tests\Contract\Support\ReleaseMatrix;
  * operation in each supported release's OpenAPI spec. This is the flagship contract check: it
  * catches an endpoint being renamed, moved or removed across ZGW versions.
  *
- * Legitimate per-release absences (endpoints added in a later release) are recorded in
- * known-gaps.json and skipped; any unlisted absence fails the test as a real incompatibility.
+ * Each operation is only exercised against the releases it is declared available in
+ * (OperationRegistry / OperationAvailability), so a mismatch is always a real incompatibility.
  */
 final class RequestContractTest extends ContractTestCase
 {
@@ -27,6 +27,10 @@ final class RequestContractTest extends ContractTestCase
     {
         foreach (array_keys(ReleaseMatrix::releases()) as $release) {
             foreach (OperationRegistry::all() as $operation) {
+                if (! in_array($release, $operation['versions'], true)) {
+                    continue;
+                }
+
                 $name = "{$release} {$operation['key']} ({$operation['method']} {$operation['path']})";
 
                 yield $name => [
@@ -77,31 +81,10 @@ final class RequestContractTest extends ContractTestCase
         // The Authorization header must always be present (ZgwConnection::getHeaders()).
         $this->assertNotEmpty($request->header('Authorization'), "Request for [{$key}] carried no Authorization header.");
 
-        $match = $spec->matchOperation($actualMethod, $relativePath);
-
-        if ($match === null && $this->isKnownGap($release, $key)) {
-            $this->markTestSkipped("Known gap: [{$key}] is not defined in ZGW {$release}.");
-        }
-
         $this->assertNotNull(
-            $match,
+            $spec->matchOperation($actualMethod, $relativePath),
             "The client calls [{$actualMethod} {$relativePath}] for [{$key}], but ZGW {$release} ".
-            "({$component}) defines no such operation. If this endpoint was added in a later release, ".
-            'record it in tests/Contract/known-gaps.json.'
+            "({$component}) defines no such operation. Adjust the client or OperationAvailability."
         );
-    }
-
-    private function isKnownGap(string $release, string $key): bool
-    {
-        $file = __DIR__.'/known-gaps.json';
-
-        if (! is_file($file)) {
-            return false;
-        }
-
-        /** @var array{releases?: array<string, list<string>>} $gaps */
-        $gaps = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
-
-        return in_array($key, $gaps['releases'][$release] ?? [], true);
     }
 }

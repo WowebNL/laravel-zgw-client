@@ -14,6 +14,8 @@ trait Store
      */
     public function store(array $params): array
     {
+        $this->assertSupported('POST', $this->collectionTemplate());
+
         $url = $this->baseUrl.$this->endpoint;
         $response = $this->connection->request()->post($url, $params);
 

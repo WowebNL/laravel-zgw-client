@@ -139,12 +139,14 @@ class ZaakService
 
 | Connection method | API | Endpoints |
 |---|---|---|
-| `->zaken()` | Zaken API v1 | `zaken()`, `statussen()`, `rollen()`, `resultaten()`, `zaakinformatieobjecten()`, `zaakobjecten()` |
-| `->catalogi()` | Catalogi API v1 | `catalogussen()`, `zaaktypen()`, `informatieobjecttypen()`, `roltypen()`, `statustypen()`, `resultaattypen()`, `eigenschappen()` |
+| `->zaken()` | Zaken API v1 | `zaken()`, `statussen()`, `rollen()`, `resultaten()`, `zaakinformatieobjecten()`, `zaakobjecten()`, `klantcontacten()`, `zaakcontactmomenten()`, `zaakverzoeken()`, `zaaknotities()` |
+| `->catalogi()` | Catalogi API v1 | `catalogussen()`, `zaaktypen()`, `informatieobjecttypen()`, `roltypen()`, `statustypen()`, `resultaattypen()`, `eigenschappen()`, `besluittypen()`, `zaakobjecttypen()`, `zaaktypeInformatieobjecttypen()` |
 | `->documenten()` | Documenten API v1 | `enkelvoudiginformatieobjecten()`, `gebruiksrechten()`, `objectinformatieobjecten()`, `verzendingen()`, `bestandsdelen()` |
 | `->besluiten()` | Besluiten API v1 | `besluiten()`, `besluitinformatieobjecten()` |
 | `->autorisaties()` | Autorisaties API v1 | `applicaties()` |
 | `->notificaties()` | Notificaties API v1 | `abonnementen()`, `kanalen()`, `notificaties()` |
+
+The package implements every operation defined by the ZGW standard (releases 1.5, 1.6, 1.7) for all six APIs; this is enforced by the contract test suite (see [Testing](#testing)).
 
 ### Available actions per endpoint
 
@@ -191,11 +193,23 @@ $doc->put('document-uuid', [/* ... */, 'lock' => $lockString]);
 // Unlock
 $doc->unlock('document-uuid', $lockString);
 
-// Retrieve audit trail
+// Retrieve audit trail (and a single entry)
 $trail = $doc->audittrail('document-uuid');
+$entry = $doc->audittrailItem('document-uuid', 'audit-uuid');
+
+// Download the binary content, and search via the _zoek endpoint
+$bytes = $doc->download('document-uuid');
+$hits  = $doc->zoek(['identificatie' => 'DOC-001']); // LazyCollection
 ```
 
-`besluiten()` also exposes `audittrail('besluit-uuid')`.
+`besluiten()` also exposes `audittrail()` and `audittrailItem()`.
+
+### Other resource-specific actions
+
+Beyond CRUD, several endpoints add the actions the ZGW standard defines for them:
+
+- `zaken()->zaken()` adds `zoek()` (POST `_zoek` search, returns a LazyCollection), `audittrail()` / `audittrailItem()`, `besluiten('zaak-uuid')` (the nested zaak-besluiten relation) and `reserveerZaaknummer()` (ZGW 1.7+).
+- `catalogi()` types `zaaktypen()`, `informatieobjecttypen()` and `besluittypen()` add `publish('uuid')` to finalise a concept.
 
 ### Autorisaties and Notificaties
 
@@ -238,8 +252,11 @@ $nrc->notificaties()->send([
 
 A connection records which ZGW standard release it targets (`version` config, env `ZGW_VERSION`, default `1.7`). It is exposed as a `ZgwVersion` enum so calling code can branch on it; an unsupported value throws `InvalidConfigurationException`.
 
+The version is also enforced. Calling an operation that does not exist in the targeted release (for example `zaaknotities()` or `reserveerZaaknummer()`, which are ZGW 1.7+, or updating a `catalogus`, which is 1.6+) throws an `UnsupportedOperationException` before any request is sent. The check runs eagerly, so even a lazy `index()` rejects an unsupported call immediately.
+
 ```php
 use Woweb\Zgw\Enums\ZgwVersion;
+use Woweb\Zgw\Exceptions\UnsupportedOperationException;
 
 $version = Zgw::connection('main')->getVersion();   // ZgwVersion::V1_7
 
@@ -387,6 +404,7 @@ All exceptions extend `Woweb\Zgw\Exceptions\ZgwException`, so you can catch the 
 | `AuthorizationException` | `client_id` or `client_secret` is empty when a token is minted. |
 | `WeakSecretException` | The `client_secret` does not meet the configured strength rules. |
 | `InvalidConfigurationException` | A connection or a base URL is not configured, or the `version` is not a supported ZGW release. |
+| `UnsupportedOperationException` | An operation was called that the connection's targeted ZGW release does not define. |
 | `DisallowedHostException` | A `next` link or direct URL targets an origin that is not on the allowlist. |
 | `PaginationLimitException` | Auto-pagination exceeded `max_pages`. |
 | `InvalidIdentifierException` | A resource identifier contained characters that are not allowed in a URL segment. |

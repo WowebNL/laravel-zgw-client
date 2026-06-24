@@ -31,6 +31,10 @@ final class ResponseContractTest extends ContractTestCase
                     continue;
                 }
 
+                if (! in_array($release, $operation['versions'], true)) {
+                    continue;
+                }
+
                 $name = "{$release} {$operation['key']}";
 
                 yield $name => [

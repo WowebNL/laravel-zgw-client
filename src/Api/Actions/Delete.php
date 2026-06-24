@@ -17,6 +17,8 @@ trait Delete
      */
     public function delete(string $uuid): bool
     {
+        $this->assertSupported('DELETE', $this->itemTemplate());
+
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid);
         $response = $this->connection->request()->delete($url);
 

@@ -14,6 +14,8 @@ trait Put
      */
     public function put(string $uuid, array $params): array
     {
+        $this->assertSupported('PUT', $this->itemTemplate());
+
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid);
         $response = $this->connection->request()->put($url, $params);
 

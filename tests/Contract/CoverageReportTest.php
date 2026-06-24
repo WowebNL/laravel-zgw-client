@@ -9,16 +9,13 @@ use Woweb\Zgw\Tests\Contract\Support\OperationRegistry;
 use Woweb\Zgw\Tests\Contract\Support\ReleaseMatrix;
 
 /**
- * Informational (non-failing) report of how much of each ZGW release's API surface this package
- * covers. For every release it writes build/zgw-coverage-{release}.md listing the spec operations
- * the client does not implement, including the components it does not support at all (Notificaties
- * and Autorisaties). Use it to track future work, not as a pass/fail gate.
+ * Enforces full coverage: for every supported release, the client must implement every CRUD
+ * operation (GET/POST/PUT/PATCH/DELETE; HEAD/OPTIONS/TRACE mirror GET and are never issued) that
+ * the release's OpenAPI spec defines. Any uncovered operation fails the test. A coverage report is
+ * also written to build/zgw-coverage-{release}.md for reference.
  */
 final class CoverageReportTest extends ContractTestCase
 {
-    /** Core ZGW components that this package does not implement at all. */
-    private const UNIMPLEMENTED_COMPONENTS = [];
-
     /**
      * @return iterable<string, array{0: string}>
      */
@@ -45,7 +42,7 @@ final class CoverageReportTest extends ContractTestCase
             $this->markTestSkipped("ZGW {$release} specs are not present in this run.");
         }
 
-        $registry = $this->registryByComponent();
+        $registry = $this->registryByComponent($release);
 
         $lines = [
             "# ZGW {$release} coverage report",
@@ -55,7 +52,7 @@ final class CoverageReportTest extends ContractTestCase
         ];
 
         $totalSpecOps = 0;
-        $totalCovered = 0;
+        $allUncovered = [];
 
         foreach ($components as $component => $meta) {
             $specFile = ReleaseMatrix::specFile($release, $component);
@@ -80,10 +77,9 @@ final class CoverageReportTest extends ContractTestCase
                 $specOpCount++;
                 $signature = strtolower($operation['method']).' '.$this->normalize($operation['path']);
 
-                if (in_array($signature, $covered, true)) {
-                    $totalCovered++;
-                } else {
+                if (! in_array($signature, $covered, true)) {
                     $uncovered[] = strtoupper($operation['method']).' '.$operation['path'];
+                    $allUncovered[] = "{$component}: ".strtoupper($operation['method']).' '.$operation['path'];
                 }
             }
 
@@ -105,16 +101,6 @@ final class CoverageReportTest extends ContractTestCase
             $lines[] = '';
         }
 
-        $lines[] = '## Unimplemented components';
-        $lines[] = '';
-        if (self::UNIMPLEMENTED_COMPONENTS === []) {
-            $lines[] = '- None: all core ZGW components are implemented.';
-        }
-        foreach (self::UNIMPLEMENTED_COMPONENTS as $component) {
-            $lines[] = "- {$component}: not supported by this package.";
-        }
-        $lines[] = '';
-
         $dir = dirname(__DIR__, 2).'/build';
         if (! is_dir($dir)) {
             mkdir($dir, 0o775, true);
@@ -123,21 +109,30 @@ final class CoverageReportTest extends ContractTestCase
         $report = $dir."/zgw-coverage-{$release}.md";
         file_put_contents($report, implode("\n", $lines)."\n");
 
-        $this->assertFileExists($report);
         $this->assertGreaterThan(0, $totalSpecOps, "No operations were read from the ZGW {$release} specs.");
-        $this->assertGreaterThan(0, $totalCovered, "The client covers no operations in ZGW {$release}; the registry or path matching is likely broken.");
+        $this->assertSame(
+            [],
+            $allUncovered,
+            "ZGW {$release} has ".count($allUncovered).' uncovered spec operation(s); the client must implement all of them:'.
+            "\n  - ".implode("\n  - ", $allUncovered)
+        );
     }
 
     /**
-     * Registry operations grouped by component as normalized "method path" signatures.
+     * Registry operations available in the given release, grouped by component as normalized
+     * "method path" signatures.
      *
      * @return array<string, list<string>>
      */
-    private function registryByComponent(): array
+    private function registryByComponent(string $release): array
     {
         $grouped = [];
 
         foreach (OperationRegistry::all() as $operation) {
+            if (! in_array($release, $operation['versions'], true)) {
+                continue;
+            }
+
             $grouped[$operation['component']][] = strtolower($operation['method']).' '.$this->normalize($operation['path']);
         }
 
