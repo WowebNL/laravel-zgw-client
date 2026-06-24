@@ -33,6 +33,18 @@ final class CoverageReportTest extends ContractTestCase
     public function test_writes_coverage_report(string $release): void
     {
         $components = ReleaseMatrix::releases()[$release]['components'];
+
+        // Each contract CI job fetches only its own release's specs, so skip a release whose
+        // fixtures are not present (matching the per-operation contract tests).
+        $available = array_filter(
+            array_keys($components),
+            fn (string $component): bool => ReleaseMatrix::specFile($release, $component) !== null,
+        );
+
+        if ($available === []) {
+            $this->markTestSkipped("ZGW {$release} specs are not present in this run.");
+        }
+
         $registry = $this->registryByComponent();
 
         $lines = [
