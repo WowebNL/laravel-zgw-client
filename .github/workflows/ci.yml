@@ -122,3 +122,63 @@ jobs:
 
       - name: Deptrac
         run: vendor/bin/deptrac analyse --no-progress
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          # PCOV is the fast coverage driver; yaml parses the VNG specs the contract suite reads.
+          extensions: yaml
+          coverage: pcov
+
+      - name: Install dependencies
+        run: |
+          composer config --no-plugins policy.advisories.block false || true
+          composer update --prefer-dist --no-interaction
+
+      - name: Cache fetched specs
+        uses: actions/cache@v4
+        with:
+          path: tests/fixtures/specs
+          key: zgw-specs-${{ hashFiles('tests/Contract/releases.json') }}-all
+
+      # Fetch every release so the contract suite runs in full and coverage is representative.
+      - name: Fetch specs
+        run: php scripts/fetch-specs.php
+
+      - name: Run tests with coverage
+        run: vendor/bin/phpunit --coverage-cobertura build/coverage/cobertura.xml
+
+      - name: Summarise coverage
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: build/coverage/cobertura.xml
+          format: markdown
+          output: both
+          badge: true
+          # Show the number; do not fail the build on it.
+          fail_below_min: false
+          thresholds: '60 80'
+
+      - name: Write coverage to the job summary
+        if: always()
+        run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment coverage on the pull request
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: coverage
+          recreate: true
+          path: code-coverage-results.md
