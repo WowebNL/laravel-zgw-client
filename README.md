@@ -448,7 +448,17 @@ $payload = (new ZaakWrite)
 Zgw::connection('main')->zaken()->zaken()->patch($uuid, $payload);
 ```
 
-The DTOs are generated from the pinned OpenAPI specs with `composer dto:generate` (a require-dev tool; the output is committed, so the runtime never carries the generator). This release ships the Zaak resource as the first slice; the remaining resources follow.
+The DTOs are generated from the pinned OpenAPI specs with `composer dto:generate` (a require-dev tool; the output is committed, so the runtime never carries the generator). Every read-capable resource across the six APIs has a DTO, generated per component, with per-field `@since` and `@deprecated` annotations that the contract suite checks against the specs.
+
+Polymorphic fields resolve by their discriminator. A `Rol`'s `betrokkeneIdentificatie` becomes the typed DTO its `betrokkeneType` selects (all five subtypes are typed; an unknown value becomes null), and a `ZaakObject`'s `objectIdentificatie` becomes the typed DTO its `objectType` selects for the common object types, keeping every other type as a raw array so nothing is lost.
+
+```php
+$rol = Typed::wrap(Zgw::connection('main')->zaken()->rollen())->show($uuid);
+
+if ($rol->betrokkeneIdentificatie instanceof RolNatuurlijkPersoon) {
+    $rol->betrokkeneIdentificatie->inpBsn; // typed access to the citizen's BSN
+}
+```
 
 ## Events
 

@@ -54,6 +54,11 @@ final class DtoGenerator
      * @param  array<string, array{type: class-string, cast: class-string}>  $valueObjects  Schema
      *                                                                                      names mapped to a hand-written value object and its cast (for stable, standardised
      *                                                                                      structures such as GeoJSON that are modelled as value objects, not generated DTOs).
+     * @param  array<string, array{only?: list<string>, fallbackToRaw?: bool}>  $discriminators  Per
+     *                                                                                           discriminated schema, which discriminator values get a typed sub-DTO (`only`,
+     *                                                                                           default all mapped values) and whether an unmapped value keeps the raw sub-object
+     *                                                                                           instead of resolving to null (`fallbackToRaw`, default false). Discriminators are
+     *                                                                                           detected from the specs; this only narrows the typed set and the fallback mode.
      */
     public function __construct(
         private readonly string $component,
@@ -62,6 +67,7 @@ final class DtoGenerator
         private readonly string $outDir,
         private readonly array $opaque = [],
         private readonly array $valueObjects = [],
+        private readonly array $discriminators = [],
     ) {}
 
     /**
@@ -187,8 +193,97 @@ final class DtoGenerator
             }
         }
 
+        // A discriminated schema (Rol, ZaakObject) carries its polymorphic sub-object only on its
+        // subtypes, not on the base properties walked above, so inject it from the discriminator.
+        $this->appendDiscriminatorField($schemaName, $fields, $casts, $imports);
+
         $contents = $this->renderClass($className, $schemaName, $isRoot, $imports, $fields, $casts);
         $this->files[$this->outDir.'/'.$className.'.php'] = $contents;
+    }
+
+    /**
+     * If the schema uses a discriminator, append the polymorphic sub-object field (resolved by a
+     * sibling discriminator value into a typed sub-DTO) and its DiscriminatorCast, and queue the
+     * leaf DTOs for generation.
+     *
+     * @param  list<string>  $fields
+     * @param  array<string, string>  $casts
+     * @param  list<string>  $imports
+     */
+    private function appendDiscriminatorField(string $schemaName, array &$fields, array &$casts, array &$imports): void
+    {
+        // Presence across releases (for version metadata): the releases whose schema is discriminated.
+        $present = [];
+        $resolution = null;
+
+        foreach ($this->releaseOrder as $release) {
+            $candidate = $this->specsByRelease[$release]->discriminatorResolution($schemaName);
+            if ($candidate !== null) {
+                $present[] = $release;
+                $resolution = $candidate; // Newest wins.
+            }
+        }
+
+        if ($resolution === null) {
+            return;
+        }
+
+        $config = $this->discriminators[$schemaName] ?? [];
+        $only = $config['only'] ?? null;
+        $fallbackToRaw = (bool) ($config['fallbackToRaw'] ?? false);
+
+        $map = [];
+        $leafImports = [];
+
+        foreach ($resolution['map'] as $value => $leaf) {
+            if ($only !== null && ! in_array($value, $only, true)) {
+                continue;
+            }
+
+            $map[$value] = $leaf;
+            $this->objectQueue[$leaf] ??= false;
+            $leafImports[] = $this->namespace.'\\'.$leaf;
+        }
+
+        if ($map === []) {
+            return;
+        }
+
+        $field = $resolution['field'];
+        $since = $present[0] === $this->releaseOrder[0] ? null : $present[0];
+        $removedIn = $this->removedIn($present);
+
+        $unionDoc = implode('|', array_values(array_unique(array_values($map))));
+        if ($fallbackToRaw) {
+            $unionDoc .= '|array<string, mixed>';
+        }
+        $descriptor = [
+            'php' => $fallbackToRaw ? 'mixed' : '?Data',
+            'doc' => "@var {$unionDoc}|null",
+            'cast' => null,
+            'castImport' => null,
+            'imports' => [],
+        ];
+
+        $fields[] = $this->renderField($field, $descriptor, $since, $removedIn);
+
+        $entries = [];
+        foreach ($map as $value => $leaf) {
+            $entries[] = var_export($value, true).' => '.$leaf.'::class';
+        }
+        $castArgs = var_export($resolution['property'], true).', ['.implode(', ', $entries).']';
+        if ($fallbackToRaw) {
+            $castArgs .= ', true';
+        }
+        $casts[$field] = "new DiscriminatorCast({$castArgs})";
+
+        $imports[] = 'Woweb\Zgw\Data\Casts\DiscriminatorCast';
+        if (! $fallbackToRaw) {
+            $imports[] = 'Woweb\Zgw\Data\Data';
+        }
+        foreach ($leafImports as $import) {
+            $imports[] = $import;
+        }
     }
 
     /**

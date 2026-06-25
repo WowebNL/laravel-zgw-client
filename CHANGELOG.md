@@ -45,8 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   array API stays available. Read DTOs are generated from the pinned OpenAPI specs with
   `composer dto:generate` (a require-dev tool, output committed) and kept in step with the specs by
   a coverage test. Writes use separate builders whose payload contains only the fields you set, so
-  a PATCH never clears a field by accident. This release ships the Zaak resource as the first
-  vertical slice; remaining resources follow.
+  a PATCH never clears a field by accident. Read DTOs cover every read-capable resource across the
+  six APIs, generated per component, with per-field `@since`/`@deprecated` version metadata verified
+  against the specs.
+- Typed polymorphic sub-objects: a `Rol`'s `betrokkeneIdentificatie` and a `ZaakObject`'s
+  `objectIdentificatie` hydrate into the typed DTO their discriminator selects. Rol types all five
+  `betrokkeneType` subtypes (an unknown value resolves to null); ZaakObject types the common
+  `objectType` subtypes and keeps every other value as a raw array, so nothing is dropped. The
+  generated resolvers are checked against the spec discriminators by the contract suite.
 
 ### Changed
 
