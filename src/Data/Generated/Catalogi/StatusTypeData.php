@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterval;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\DtoCollectionCast;
 use Woweb\Zgw\Data\Casts\DurationCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
@@ -64,6 +65,9 @@ class StatusTypeData extends Data
 
     public ?CarbonImmutable $eindeObject;
 
+    /** @since ZGW 1.6 */
+    public ?StatusTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -79,6 +83,7 @@ class StatusTypeData extends Data
             'eindeGeldigheid' => new DateTimeCast,
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
+            '_expand' => new DtoCast(StatusTypeEmbedded::class),
         ];
     }
 }

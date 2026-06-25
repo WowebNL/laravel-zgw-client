@@ -9,22 +9,20 @@ namespace Woweb\Zgw\Data\Generated\Zaken;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Data;
-use Woweb\Zgw\Data\Generated\Catalogi\ZaakObjectTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\EigenschapData;
 
 /**
- * Generated from the ZGW "ZaakObjectEmbedded" schema (component: zaken).
+ * Generated from the ZGW "ZaakEigenschapEmbedded" schema (component: zaken).
  *
- * @zgw-schema zaken:ZaakObjectEmbedded
+ * @zgw-schema zaken:ZaakEigenschapEmbedded
  */
-class ZaakObjectEmbedded extends Data
+class ZaakEigenschapEmbedded extends Data
 {
     /** @since ZGW 1.6 */
     public ?ZaakData $zaak;
 
-    /** @var array<string, mixed>|null Kept as a raw structure. @since ZGW 1.6 */
-    public ?array $object;
-
-    public ?ZaakObjectTypeData $zaakobjecttype;
+    /** @since ZGW 1.6 */
+    public ?EigenschapData $eigenschap;
 
     /**
      * @return array<string, Cast>
@@ -33,7 +31,7 @@ class ZaakObjectEmbedded extends Data
     {
         return [
             'zaak' => new DtoCast(ZaakData::class),
-            'zaakobjecttype' => new DtoCast(ZaakObjectTypeData::class),
+            'eigenschap' => new DtoCast(EigenschapData::class),
         ];
     }
 }

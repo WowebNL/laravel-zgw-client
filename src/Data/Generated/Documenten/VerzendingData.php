@@ -58,6 +58,8 @@ class VerzendingData extends Data
 
     public ?string $telefoonnummer;
 
+    public ?VerzendingEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -74,6 +76,7 @@ class VerzendingData extends Data
             'binnenlandsCorrespondentieadres' => new DtoCast(BinnenlandsCorrespondentieadresVerzending::class),
             'buitenlandsCorrespondentieadres' => new DtoCast(BuitenlandsCorrespondentieadresVerzending::class),
             'correspondentiePostadres' => new DtoCast(BuitenlandsCorrespondentiepostadresVerzending::class),
+            '_expand' => new DtoCast(VerzendingEmbedded::class),
         ];
     }
 }

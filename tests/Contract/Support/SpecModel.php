@@ -257,6 +257,46 @@ final class SpecModel
     }
 
     /**
+     * The embedded schema name an expandable resource exposes through its `_expand` field, or null
+     * when the resource has no expanded variant in this release.
+     *
+     * ZGW models expansion (`?expand=`) as a sibling schema `{Schema}Expanded` shaped allOf[Schema,
+     * {properties: {_expand: {Schema}Embedded}}]. The embedded schema carries the expanded related
+     * resources. This finds that embedded schema name so the `_expand` field can be typed and so the
+     * contract suite knows `_expand` is a real field of the base DTO.
+     */
+    public function expandResolution(string $schemaName): ?string
+    {
+        $expanded = $this->componentSchema($schemaName.'Expanded');
+
+        if ($expanded === null) {
+            return null;
+        }
+
+        // A plain resource carries _expand on an allOf member (allOf[Schema, {_expand}]); a
+        // discriminated resource (Rol, ZaakObject) carries it directly in its own properties.
+        $candidates = [];
+        if (isset($expanded['properties']) && is_array($expanded['properties'])) {
+            $candidates[] = $expanded['properties'];
+        }
+        foreach (is_array($expanded['allOf'] ?? null) ? $expanded['allOf'] : [] as $member) {
+            if (is_array($member) && isset($member['properties']) && is_array($member['properties'])) {
+                $candidates[] = $member['properties'];
+            }
+        }
+
+        foreach ($candidates as $properties) {
+            $expand = $properties['_expand'] ?? null;
+
+            if (is_array($expand) && isset($expand['$ref']) && is_string($expand['$ref'])) {
+                return $this->basename($expand['$ref']);
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Resolve a schema's discriminator into the polymorphic sub-object it selects.
      *
      * ZGW models polymorphism as a base schema carrying a `discriminator` whose `propertyName` is a

@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Generated\Catalogi;
 
 use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
@@ -39,6 +40,9 @@ class ZaakTypeInformatieObjectTypeData extends Data
 
     public ?Reference $statustype;
 
+    /** @since ZGW 1.6 */
+    public ?ZaakTypeInformatieObjectTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -50,6 +54,7 @@ class ZaakTypeInformatieObjectTypeData extends Data
             'catalogus' => new ReferenceCast,
             'richting' => new EnumCast(Richting::class),
             'statustype' => new ReferenceCast,
+            '_expand' => new DtoCast(ZaakTypeInformatieObjectTypeEmbedded::class),
         ];
     }
 }

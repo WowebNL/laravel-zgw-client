@@ -87,6 +87,17 @@ foreach ($resources as $resource) {
     $rootsByComponent[$resource->component][$resource->schema] ??= true;
 }
 
+/**
+ * Root schema names per component, so a generator can resolve a cross-component external $ref (an
+ * expanded zaak referencing the catalogi ZaakType) to the generated DTO in that component.
+ *
+ * @var array<string, list<string>> $rootSchemasByComponent
+ */
+$rootSchemasByComponent = [];
+foreach ($rootsByComponent as $component => $schemas) {
+    $rootSchemasByComponent[$component] = array_keys($schemas);
+}
+
 // Clear previously generated output so removed schemas do not linger.
 if (is_dir($generatedDir)) {
     $entries = new RecursiveIteratorIterator(
@@ -111,6 +122,8 @@ foreach ($rootsByComponent as $component => $schemas) {
         opaque: $opaque,
         valueObjects: $valueObjects,
         discriminators: $discriminators,
+        baseNamespace: $baseNamespace,
+        rootSchemasByComponent: $rootSchemasByComponent,
     );
 
     $total += count($generator->generate());

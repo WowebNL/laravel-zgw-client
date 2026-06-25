@@ -9,6 +9,7 @@ namespace Woweb\Zgw\Data\Generated\Documenten;
 use Carbon\CarbonImmutable;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
@@ -33,6 +34,8 @@ class GebruiksrechtenData extends Data
 
     public ?string $omschrijvingVoorwaarden;
 
+    public ?GebruiksrechtenEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -43,6 +46,7 @@ class GebruiksrechtenData extends Data
             'informatieobject' => new ReferenceCast,
             'startdatum' => new DateTimeCast,
             'einddatum' => new DateTimeCast,
+            '_expand' => new DtoCast(GebruiksrechtenEmbedded::class),
         ];
     }
 }

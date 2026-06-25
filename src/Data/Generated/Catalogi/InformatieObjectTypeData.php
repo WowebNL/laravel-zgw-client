@@ -63,6 +63,9 @@ class InformatieObjectTypeData extends Data
 
     public ?InformatieObjectTypeOmschrijvingGeneriek $omschrijvingGeneriek;
 
+    /** @since ZGW 1.6 */
+    public ?InformatieObjectTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -77,6 +80,7 @@ class InformatieObjectTypeData extends Data
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
             'omschrijvingGeneriek' => new DtoCast(InformatieObjectTypeOmschrijvingGeneriek::class),
+            '_expand' => new DtoCast(InformatieObjectTypeEmbedded::class),
         ];
     }
 }

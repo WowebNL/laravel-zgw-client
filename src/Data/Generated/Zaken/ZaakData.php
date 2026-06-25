@@ -123,6 +123,8 @@ class ZaakData extends Data
     /** @var array<string, mixed>|null Kept as a raw structure. */
     public ?array $processobject;
 
+    public ?ZaakEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -154,6 +156,7 @@ class ZaakData extends Data
             'archiefactiedatum' => new DateTimeCast,
             'resultaat' => new ReferenceCast,
             'startdatumBewaartermijn' => new DateTimeCast,
+            '_expand' => new DtoCast(ZaakEmbedded::class),
         ];
     }
 }

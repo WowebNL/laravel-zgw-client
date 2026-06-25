@@ -57,11 +57,10 @@ class RolData extends Data
     /** @var list<string>|null */
     public ?array $statussen;
 
-    /** @deprecated Removed in ZGW 1.6 */
-    public ?RolEmbedded $_expand;
-
     /** @var RolMedewerker|RolNatuurlijkPersoon|RolNietNatuurlijkPersoon|RolOrganisatorischeEenheid|RolVestiging|null */
     public ?Data $betrokkeneIdentificatie;
+
+    public ?RolEmbedded $_expand;
 
     /**
      * @return array<string, Cast>
@@ -77,8 +76,8 @@ class RolData extends Data
             'registratiedatum' => new DateTimeCast,
             'indicatieMachtiging' => new EnumCast(IndicatieMachtiging::class),
             'contactpersoonRol' => new DtoCast(ContactPersoonRol::class),
-            '_expand' => new DtoCast(RolEmbedded::class),
             'betrokkeneIdentificatie' => new DiscriminatorCast('betrokkeneType', ['medewerker' => RolMedewerker::class, 'natuurlijk_persoon' => RolNatuurlijkPersoon::class, 'niet_natuurlijk_persoon' => RolNietNatuurlijkPersoon::class, 'organisatorische_eenheid' => RolOrganisatorischeEenheid::class, 'vestiging' => RolVestiging::class]),
+            '_expand' => new DtoCast(RolEmbedded::class),
         ];
     }
 }

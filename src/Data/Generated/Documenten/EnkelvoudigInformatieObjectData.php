@@ -92,6 +92,8 @@ class EnkelvoudigInformatieObjectData extends Data
     /** @var list<string>|null */
     public ?array $trefwoorden;
 
+    public ?EnkelvoudigInformatieObjectEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -111,6 +113,7 @@ class EnkelvoudigInformatieObjectData extends Data
             'integriteit' => new DtoCast(Integriteit::class),
             'informatieobjecttype' => new ReferenceCast,
             'bestandsdelen' => new DtoCollectionCast(BestandsDeel::class),
+            '_expand' => new DtoCast(EnkelvoudigInformatieObjectEmbedded::class),
         ];
     }
 }

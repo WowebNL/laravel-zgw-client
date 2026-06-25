@@ -137,6 +137,9 @@ class ZaakTypeData extends Data
 
     public ?bool $concept;
 
+    /** @since ZGW 1.6 */
+    public ?ZaakTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -160,6 +163,7 @@ class ZaakTypeData extends Data
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
             'versiedatum' => new DateTimeCast,
+            '_expand' => new DtoCast(ZaakTypeEmbedded::class),
         ];
     }
 }

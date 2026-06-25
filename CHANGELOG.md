@@ -53,6 +53,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `betrokkeneType` subtypes (an unknown value resolves to null); ZaakObject types the common
   `objectType` subtypes and keeps every other value as a raw array, so nothing is dropped. The
   generated resolvers are checked against the spec discriminators by the contract suite.
+- Typed expanded responses: a resource fetched with `?expand=` carries a typed `_expand` DTO that
+  hydrates the embedded related resources, including across components (an expanded zaak's
+  `zaaktype` becomes a catalogi DTO and its `informatieobjecten` documenten DTOs), resolving
+  recursively. `_expand` is null on a response that was not expanded, and a related resource the
+  generator cannot map to a DTO degrades to a raw array rather than being dropped.
 
 ### Changed
 

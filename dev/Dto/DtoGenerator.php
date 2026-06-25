@@ -59,6 +59,11 @@ final class DtoGenerator
      *                                                                                           default all mapped values) and whether an unmapped value keeps the raw sub-object
      *                                                                                           instead of resolving to null (`fallbackToRaw`, default false). Discriminators are
      *                                                                                           detected from the specs; this only narrows the typed set and the fallback mode.
+     * @param  string  $baseNamespace  Root namespace of all generated components, so an expanded
+     *                                 field can link to a DTO in another component's namespace.
+     * @param  array<string, list<string>>  $rootSchemasByComponent  Root schema names per component,
+     *                                                               used to resolve cross-component external $refs (a `zaaktype` in an expanded zaak points at
+     *                                                               the catalogi ZaakType) to the generated DTO, degrading to a raw array when unresolvable.
      */
     public function __construct(
         private readonly string $component,
@@ -68,6 +73,8 @@ final class DtoGenerator
         private readonly array $opaque = [],
         private readonly array $valueObjects = [],
         private readonly array $discriminators = [],
+        private readonly string $baseNamespace = '',
+        private readonly array $rootSchemasByComponent = [],
     ) {}
 
     /**
@@ -156,9 +163,14 @@ final class DtoGenerator
         $order = [];
         foreach (array_reverse($this->releaseOrder) as $release) {
             foreach (array_keys($perRelease[$release] ?? []) as $field) {
-                if (! in_array($field, $order, true)) {
-                    $order[] = $field;
+                // _expand is sourced from the {Schema}Expanded variant (appendExpandField), not from
+                // the base properties: older releases inline it on the base, newer ones move it to
+                // the Expanded schema, so the inline copy is skipped to keep one authoritative field.
+                if ($field === '_expand' || in_array($field, $order, true)) {
+                    continue;
                 }
+
+                $order[] = $field;
             }
         }
 
@@ -196,6 +208,9 @@ final class DtoGenerator
         // A discriminated schema (Rol, ZaakObject) carries its polymorphic sub-object only on its
         // subtypes, not on the base properties walked above, so inject it from the discriminator.
         $this->appendDiscriminatorField($schemaName, $fields, $casts, $imports);
+
+        // An expandable resource gains a typed _expand sub-object holding its embedded relations.
+        $this->appendExpandField($schemaName, $fields, $casts, $imports);
 
         $contents = $this->renderClass($className, $schemaName, $isRoot, $imports, $fields, $casts);
         $this->files[$this->outDir.'/'.$className.'.php'] = $contents;
@@ -287,6 +302,218 @@ final class DtoGenerator
     }
 
     /**
+     * If the schema has an expanded variant ({Schema}Expanded), append the typed _expand field that
+     * carries its embedded related resources, and queue the embedded schema for generation. The
+     * field is null on a response that was not expanded.
+     *
+     * @param  list<string>  $fields
+     * @param  array<string, string>  $casts
+     * @param  list<string>  $imports
+     */
+    private function appendExpandField(string $schemaName, array &$fields, array &$casts, array &$imports): void
+    {
+        $present = [];
+        $embedded = null;
+
+        foreach ($this->releaseOrder as $release) {
+            $candidate = $this->specsByRelease[$release]->expandResolution($schemaName);
+            if ($candidate !== null) {
+                $present[] = $release;
+                $embedded = $candidate; // Newest wins.
+            }
+        }
+
+        if ($embedded === null) {
+            return;
+        }
+
+        $this->objectQueue[$embedded] ??= false;
+
+        $since = $present[0] === $this->releaseOrder[0] ? null : $present[0];
+        $removedIn = $this->removedIn($present);
+
+        $descriptor = [
+            'php' => '?'.$embedded,
+            'doc' => null,
+            'cast' => "new DtoCast({$embedded}::class)",
+            'castImport' => 'Woweb\Zgw\Data\Casts\DtoCast',
+            'imports' => ['Woweb\Zgw\Data\Casts\DtoCast'],
+        ];
+
+        $fields[] = $this->renderField('_expand', $descriptor, $since, $removedIn);
+        $casts['_expand'] = $descriptor['cast'];
+        $imports[] = $descriptor['castImport'];
+    }
+
+    /**
+     * Resolve a property's reference to a typed DTO that lives outside the plain "object with a
+     * properties map" case: a cross-component external $ref (an expanded zaak's `zaaktype` points at
+     * the catalogi ZaakType) or a same-component {Schema}Expanded reference (which maps to that
+     * resource's base DTO, since the base DTO already carries its own _expand).
+     *
+     * Returns a link descriptor (the PHP type reference, the `::class` expression and any imports),
+     * `['raw' => true]` when a reference is present but cannot be resolved to a generated DTO (so the
+     * field degrades to a raw array), or null when the property is not such a reference and the
+     * normal describe path applies.
+     *
+     * @param  array<string, mixed>  $propSchema
+     * @return array{typeRef: string, classExpr: string, imports: list<string>}|array{raw: true}|null
+     */
+    private function linkedRef(array $propSchema): ?array
+    {
+        foreach ($this->candidateRefs($propSchema) as $ref) {
+            // Cross-component external reference (a file path before the fragment).
+            if (! str_starts_with($ref, '#/')) {
+                return $this->crossComponentTarget($ref) ?? ['raw' => true];
+            }
+
+            // Same-component expanded reference: link to the base resource's DTO.
+            $name = $this->refName($ref);
+            if (str_ends_with($name, 'Expanded')) {
+                $base = substr($name, 0, -strlen('Expanded'));
+
+                if (in_array($base, $this->rootSchemas, true)) {
+                    return ['typeRef' => $base.'Data', 'classExpr' => $base.'Data', 'imports' => []];
+                }
+
+                return ['raw' => true];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The DTO an external cross-component $ref points at, or null when the target component is not
+     * generated or the schema is not one of its root resources.
+     *
+     * @return array{typeRef: string, classExpr: string, imports: list<string>}|null
+     */
+    private function crossComponentTarget(string $ref): ?array
+    {
+        $path = explode('#', $ref)[0];
+        $component = null;
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment !== '' && isset($this->rootSchemasByComponent[$segment])) {
+                $component = $segment;
+                break;
+            }
+        }
+
+        if ($component === null) {
+            return null;
+        }
+
+        $schema = $this->refName($ref);
+
+        if (! in_array($schema, $this->rootSchemasByComponent[$component], true)) {
+            return null;
+        }
+
+        // A leading-backslash FQN avoids importing across namespaces and any short-name collisions.
+        $fqn = '\\'.$this->baseNamespace.'\\'.EndpointResources::componentNamespace($component).'\\'.$schema.'Data';
+
+        return ['typeRef' => $fqn, 'classExpr' => $fqn, 'imports' => []];
+    }
+
+    /**
+     * The generated class name for a same-component object reference, queueing it when it is not
+     * already a root. A root resource is generated as {Schema}Data (and is already queued), so a
+     * nested reference to it must use that name rather than the bare schema name.
+     */
+    private function objectClass(string $refName): string
+    {
+        if (in_array($refName, $this->rootSchemas, true)) {
+            return $refName.'Data';
+        }
+
+        $this->objectQueue[$refName] ??= false;
+
+        return $refName;
+    }
+
+    /**
+     * The reference strings a property offers, from a direct $ref or the members of a
+     * oneOf/anyOf/allOf, skipping the tolerant-fallback placeholders.
+     *
+     * @param  array<string, mixed>  $schema
+     * @return list<string>
+     */
+    private function candidateRefs(array $schema): array
+    {
+        $refs = [];
+
+        if (isset($schema['$ref']) && is_string($schema['$ref'])) {
+            $refs[] = $schema['$ref'];
+        }
+
+        foreach (['oneOf', 'anyOf', 'allOf'] as $combiner) {
+            if (! isset($schema[$combiner]) || ! is_array($schema[$combiner])) {
+                continue;
+            }
+
+            foreach ($schema[$combiner] as $member) {
+                if (! is_array($member) || ! isset($member['$ref']) || ! is_string($member['$ref'])) {
+                    continue;
+                }
+
+                if (in_array($this->refName($member['$ref']), ['BlankEnum', 'NullEnum', 'GenesteExpansie', 'EmptyObject'], true)) {
+                    continue;
+                }
+
+                $refs[] = $member['$ref'];
+            }
+        }
+
+        return $refs;
+    }
+
+    /**
+     * @param  array{typeRef: string, classExpr: string, imports: list<string>}  $linked
+     * @return array{php: string, doc: ?string, cast: ?string, castImport: ?string, imports: list<string>}
+     */
+    private function linkedScalarDescriptor(array $linked): array
+    {
+        return [
+            'php' => '?'.$linked['typeRef'],
+            'doc' => null,
+            'cast' => "new DtoCast({$linked['classExpr']}::class)",
+            'castImport' => 'Woweb\Zgw\Data\Casts\DtoCast',
+            'imports' => array_merge(['Woweb\Zgw\Data\Casts\DtoCast'], $linked['imports']),
+        ];
+    }
+
+    /**
+     * @param  array{typeRef: string, classExpr: string, imports: list<string>}  $linked
+     * @return array{php: string, doc: ?string, cast: ?string, castImport: ?string, imports: list<string>}
+     */
+    private function linkedCollectionDescriptor(array $linked): array
+    {
+        return [
+            'php' => '?array',
+            'doc' => "@var list<{$linked['typeRef']}>|null",
+            'cast' => "new DtoCollectionCast({$linked['classExpr']}::class)",
+            'castImport' => 'Woweb\Zgw\Data\Casts\DtoCollectionCast',
+            'imports' => array_merge(['Woweb\Zgw\Data\Casts\DtoCollectionCast'], $linked['imports']),
+        ];
+    }
+
+    /**
+     * @return array{php: string, doc: ?string, cast: ?string, castImport: ?string, imports: list<string>}
+     */
+    private function rawDescriptor(): array
+    {
+        return [
+            'php' => '?array',
+            'doc' => '@var array<string, mixed>|null Kept as a raw structure.',
+            'cast' => null,
+            'castImport' => null,
+            'imports' => [],
+        ];
+    }
+
+    /**
      * The first release in which a field is no longer present (it existed earlier and was removed),
      * or null when the field still exists in the newest release.
      *
@@ -312,6 +539,13 @@ final class DtoGenerator
      */
     private function describe(array $propSchema, SpecModel $spec): array
     {
+        // Cross-component external $ref or a same-component {Schema}Expanded reference resolves to a
+        // DTO outside the plain object-with-properties case, or degrades to a raw array.
+        $linked = $this->linkedRef($propSchema);
+        if ($linked !== null) {
+            return isset($linked['raw']) ? $this->rawDescriptor() : $this->linkedScalarDescriptor($linked);
+        }
+
         [$resolved, $refName] = $this->unwrap($propSchema, $spec);
 
         // Value object reference: a stable, standardised structure modelled as a hand-written value
@@ -358,14 +592,14 @@ final class DtoGenerator
 
         // Object reference.
         if ($refName !== null && isset($resolved['properties'])) {
-            $this->objectQueue[$refName] ??= false;
+            $class = $this->objectClass($refName);
 
             return [
-                'php' => '?'.$refName,
+                'php' => '?'.$class,
                 'doc' => null,
-                'cast' => "new DtoCast({$refName}::class)",
+                'cast' => "new DtoCast({$class}::class)",
                 'castImport' => 'Woweb\Zgw\Data\Casts\DtoCast',
-                'imports' => ['Woweb\Zgw\Data\Casts\DtoCast', $this->namespace.'\\'.$refName],
+                'imports' => ['Woweb\Zgw\Data\Casts\DtoCast', $this->namespace.'\\'.$class],
             ];
         }
 
@@ -375,6 +609,12 @@ final class DtoGenerator
         // Arrays.
         if ($type === 'array') {
             return $this->describeArray($resolved, $spec);
+        }
+
+        // A typeless object (no properties, no $ref) is kept as a raw array. Typing it ?string would
+        // make hydration throw a TypeError the moment an object value arrives.
+        if ($type === 'object') {
+            return $this->rawDescriptor();
         }
 
         // Scalars by format.
@@ -424,21 +664,31 @@ final class DtoGenerator
     private function describeArray(array $resolved, SpecModel $spec): array
     {
         $items = is_array($resolved['items'] ?? null) ? $resolved['items'] : [];
+
+        // A list of cross-component or expanded references (an expanded zaak's `deelzaken` is a list
+        // of ZaakExpanded, its `rollen` a list of RolExpanded) links to a list of those DTOs.
+        $linked = $this->linkedRef($items);
+        if ($linked !== null) {
+            return isset($linked['raw']) ? $this->rawDescriptor() : $this->linkedCollectionDescriptor($linked);
+        }
+
         [$itemResolved, $itemRef] = $this->unwrap($items, $spec);
 
         if ($itemRef !== null && isset($itemResolved['properties']) && ! in_array($itemRef, $this->opaque, true)) {
-            $this->objectQueue[$itemRef] ??= false;
+            $class = $this->objectClass($itemRef);
 
             return [
                 'php' => '?array',
-                'doc' => "@var list<{$itemRef}>|null",
-                'cast' => "new DtoCollectionCast({$itemRef}::class)",
+                'doc' => "@var list<{$class}>|null",
+                'cast' => "new DtoCollectionCast({$class}::class)",
                 'castImport' => 'Woweb\Zgw\Data\Casts\DtoCollectionCast',
-                'imports' => ['Woweb\Zgw\Data\Casts\DtoCollectionCast', $this->namespace.'\\'.$itemRef],
+                'imports' => ['Woweb\Zgw\Data\Casts\DtoCollectionCast', $this->namespace.'\\'.$class],
             ];
         }
 
-        $itemType = is_string($itemResolved['type'] ?? null) ? $this->scalarType($itemResolved['type']) : 'string';
+        $itemType = ($itemResolved['type'] ?? null) === 'object'
+            ? 'array<string, mixed>'
+            : (is_string($itemResolved['type'] ?? null) ? $this->scalarType($itemResolved['type']) : 'string');
 
         return [
             'php' => '?array',

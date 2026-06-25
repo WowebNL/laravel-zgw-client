@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Generated\Zaken;
 
 use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
@@ -27,6 +28,9 @@ class ZaakBesluitData extends Data
 
     public ?Reference $besluit;
 
+    /** @since ZGW 1.6 */
+    public ?ZaakBesluitEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -35,6 +39,7 @@ class ZaakBesluitData extends Data
         return [
             'url' => new ReferenceCast,
             'besluit' => new ReferenceCast,
+            '_expand' => new DtoCast(ZaakBesluitEmbedded::class),
         ];
     }
 }
