@@ -23,7 +23,9 @@ use Woweb\Zgw\Contracts\ProvidesAuditTrail;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\SearchesResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
+#[ZgwResource(schema: 'Zaak', component: 'zaken')]
 class Zaken extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ProvidesAuditTrail, ReplacesResource, SearchesResources, ShowsResource
 {
     use Audittrail;

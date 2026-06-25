@@ -222,6 +222,41 @@ final class SpecModel
     }
 
     /**
+     * The raw component schemas map (components.schemas), unresolved.
+     *
+     * @return array<string, mixed>
+     */
+    public function componentSchemas(): array
+    {
+        $components = $this->data['components'] ?? [];
+        $schemas = is_array($components) ? ($components['schemas'] ?? []) : [];
+
+        return is_array($schemas) ? $schemas : [];
+    }
+
+    /**
+     * A single component schema by name, or null when it is absent.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function componentSchema(string $name): ?array
+    {
+        $schema = $this->componentSchemas()[$name] ?? null;
+
+        return is_array($schema) ? $schema : null;
+    }
+
+    /**
+     * Resolve an in-file reference ("#/components/...") to its target, or null when external/missing.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function resolve(string $ref): ?array
+    {
+        return $this->resolveInternalRef($ref);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function operation(string $path, string $method): array
