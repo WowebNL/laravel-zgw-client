@@ -182,3 +182,28 @@ jobs:
           header: coverage
           recreate: true
           path: code-coverage-results.md
+
+      # The README badge reads its number from a Gist, updated only from main. The badge data is a
+      # single percentage in your own Gist; no coverage data goes to a third-party service.
+      # One-time setup: create a secret Gist with a coverage.json file, store a personal access
+      # token with the "gist" scope as the GIST_SECRET repo secret, and set the COVERAGE_GIST_ID
+      # repo variable to the Gist's id. Without those the step is skipped, so it never fails the run.
+      - name: Read coverage percentage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.COVERAGE_GIST_ID != ''
+        id: cov
+        run: |
+          PCT=$(php -r '$x = simplexml_load_file("build/coverage/cobertura.xml"); echo (int) round(((float) $x["line-rate"]) * 100);')
+          echo "pct=${PCT}" >> "$GITHUB_OUTPUT"
+
+      - name: Update the coverage badge Gist
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.COVERAGE_GIST_ID != ''
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: ${{ vars.COVERAGE_GIST_ID }}
+          filename: coverage.json
+          label: coverage
+          message: ${{ steps.cov.outputs.pct }}%
+          valColorRange: ${{ steps.cov.outputs.pct }}
+          minColorRange: '50'
+          maxColorRange: '95'
