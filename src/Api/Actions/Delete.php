@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api\Actions;
 
+use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Exceptions\ApiRequestException;
 
+/**
+ * @phpstan-require-implements DeletesResource
+ */
 trait Delete
 {
     /**

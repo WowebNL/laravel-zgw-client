@@ -8,9 +8,12 @@ use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\ShowsResource;
 
 // A kanaal (notification channel) is create + read only in the ZGW Notificaties API.
-class Kanalen extends AbstractEndpoint
+class Kanalen extends AbstractEndpoint implements CreatesResource, ListsResources, ShowsResource
 {
     use Index;
     use Show;

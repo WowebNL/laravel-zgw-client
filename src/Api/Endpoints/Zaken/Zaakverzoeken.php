@@ -9,9 +9,13 @@ use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\DeletesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\ShowsResource;
 
 // A relation between a zaak and a verzoek: create, read and delete.
-class Zaakverzoeken extends AbstractEndpoint
+class Zaakverzoeken extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, ShowsResource
 {
     use Delete;
     use Index;

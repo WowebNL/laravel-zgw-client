@@ -10,9 +10,13 @@ use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Connection\ZgwConnection;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\DeletesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\ShowsResource;
 
 // The besluiten linked to a specific zaak. A relation resource: create, read and delete.
-class ZaakBesluiten extends AbstractEndpoint
+class ZaakBesluiten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, ShowsResource
 {
     use Delete;
     use Index;

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Api\Actions;
 
+use Woweb\Zgw\Contracts\PatchesResource;
+
+/**
+ * @phpstan-require-implements PatchesResource
+ */
 trait Patch
 {
     /**
