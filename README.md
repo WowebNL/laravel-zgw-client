@@ -11,7 +11,7 @@ Laravel package for interacting with the Dutch ZGW (Zaakgericht Werken) APIs: Za
 
 ## Supported ZGW releases
 
-Each ZGW standard release bundles a specific version of every component API. This package targets the three releases below; pick one with `ZGW_VERSION` (see [Version awareness](#version-awareness)).
+This package follows a rolling window of the three most recent VNG ZGW standard releases. Each release bundles a specific version of every component API; pick the one you target with `ZGW_VERSION` (see [Version awareness](#version-awareness)). For how new releases are tracked and tested, see [Versioning and ZGW standard support](#versioning-and-zgw-standard-support).
 
 | API | ZGW 1.5 | ZGW 1.6 | ZGW 1.7 |
 |---|---|---|---|
@@ -27,6 +27,7 @@ Each ZGW standard release bundles a specific version of every component API. Thi
 - [Supported ZGW releases](#supported-zgw-releases)
 - [Quick guide](#quick-guide)
 - [About](#about)
+- [Versioning and ZGW standard support](#versioning-and-zgw-standard-support)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
@@ -73,6 +74,24 @@ See [Usage](#usage) for the full API surface and [Typed layer](#typed-layer-opt-
 This package is developed and maintained by [Woweb](https://www.woweb.nl). It provides a clean Laravel integration for the Dutch ZGW (Zaakgericht Werken) standard, used in Dutch government applications for case management.
 
 It is a client (consumer) for the ZGW APIs. It builds a signed JWT bearer token from your configured credentials and issues outbound HTTPS requests to a ZGW provider such as OpenZaak. The payloads it transports often contain citizen case data and personal data, so a few security defaults are enabled out of the box. Read [Behaviour to be aware of](#behaviour-to-be-aware-of) before going to production.
+
+## Versioning and ZGW standard support
+
+This package follows a rolling window of the three most recent VNG ZGW standard releases (currently 1.5, 1.6 and 1.7, listed with their per-component API versions under [Supported ZGW releases](#supported-zgw-releases)). When the VNG publishes a newer release it is added and the oldest is dropped, so the window stays at three. A connection chooses which release it targets with `ZGW_VERSION`, and a per-version guard refuses any operation the targeted release does not define (see [Version awareness](#version-awareness)).
+
+### Tracking new releases
+
+The VNG `gemma-zaken` repository does not use GitHub Releases for the standard, so a new (pre)release first appears as a new version folder under `api-specificatie`. A weekly GitHub Actions workflow (`zgw-spec-watch`) builds the current inventory of those folders, diffs it against a committed snapshot (`.github/zgw-spec-snapshot.json`), and when something new shows up it opens a tracking issue and a draft pull request that scaffolds the new versions into the contract matrix (`tests/Contract/releases.json`). A new ZGW release therefore arrives as a pull request to review, never as a silent surprise.
+
+### Testing against the standard
+
+`tests/Contract/releases.json` is the single source of truth for the supported releases and the exact OpenAPI spec version and URL of every component API in each release. The contract test suite validates the client against those real VNG specs, fetched in CI:
+
+- A per-release matrix checks each supported release on its own (every operation the standard defines is implemented, every query parameter is recognised, the pagination envelope matches).
+- An all-releases job runs the cross-release checks that only make sense with every release present: the typed DTOs are a superset of the fields across releases, and their `@since` and `@deprecated` version metadata matches when each field actually appears in the specs.
+- The generated DTOs and write builders are checked field by field against the specs, so any drift between the package and the standard turns a build red with the exact differences.
+
+When a new release lands, regenerating the typed layer with `composer dto:generate` and running the contract suite is enough to see exactly what changed.
 
 ## Installation
 
