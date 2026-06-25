@@ -33,6 +33,7 @@ This package follows a rolling window of the three most recent VNG ZGW standard 
 - [Supported ZGW releases](#supported-zgw-releases)
 - [Quick guide](#quick-guide)
 - [About](#about)
+- [Migrating from laravel-openzaak](docs/migrating-from-openzaak.md)
 - [Versioning and ZGW standard support](#versioning-and-zgw-standard-support)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -80,6 +81,8 @@ See [Usage](#usage) for the full API surface and [Typed layer](#typed-layer-opt-
 This package is developed and maintained by [Woweb](https://www.woweb.nl). It provides a clean Laravel integration for the Dutch ZGW (Zaakgericht Werken) standard, used in Dutch government applications for case management.
 
 It is a client (consumer) for the ZGW APIs. It builds a signed JWT bearer token from your configured credentials and issues outbound HTTPS requests to a ZGW provider such as OpenZaak. The payloads it transports often contain citizen case data and personal data, so a few security defaults are enabled out of the box. Read [Behaviour to be aware of](#behaviour-to-be-aware-of) before going to production.
+
+Coming from the older `woweb/laravel-openzaak` package? See the [migration guide](docs/migrating-from-openzaak.md).
 
 ## Versioning and ZGW standard support
 
