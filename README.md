@@ -1,8 +1,72 @@
 # Laravel ZGW client
 
+[![Tests](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/ci.yml?branch=main&label=tests)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
+[![Contracts](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/contract.yml?branch=main&label=contracts)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/contract.yml)
+[![Code style: Pint](https://img.shields.io/badge/code%20style-pint-orange.svg)](https://laravel.com/docs/pint)
+[![License: EUPL-1.2](https://img.shields.io/badge/license-EUPL--1.2-blue.svg)](LICENSE.md)
+
 Laravel package for interacting with the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten, Besluiten, Autorisaties and Notificaties. It supports the ZGW standard releases 1.5, 1.6 and 1.7.
 
-**Requirements:** PHP 8.2+, Laravel 12 or 13, firebase/php-jwt 7
+**Requirements:** PHP 8.2+, Laravel 12 or 13.
+
+## Supported ZGW releases
+
+Each ZGW standard release bundles a specific version of every component API. This package targets the three releases below; pick one with `ZGW_VERSION` (see [Version awareness](#version-awareness)).
+
+| API | ZGW 1.5 | ZGW 1.6 | ZGW 1.7 |
+|---|---|---|---|
+| Zaken (ZRC) | 1.5.1 | 1.6.0 | 1.7.0 |
+| Catalogi (ZTC) | 1.3.1 | 1.3.2 | 1.3.3 |
+| Documenten (DRC) | 1.5.0 | 1.6.0 | 1.7.0 |
+| Besluiten (BRC) | 1.0.2 | 1.1.0 | 1.1.0 |
+| Autorisaties (AC) | 1.0.0 | 1.0.0 | 1.1.0 |
+| Notificaties (NRC) | 1.0.1 | 1.0.1 | 1.0.1 |
+
+## Contents
+
+- [Supported ZGW releases](#supported-zgw-releases)
+- [Quick guide](#quick-guide)
+- [About](#about)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Available APIs and endpoints](#available-apis-and-endpoints)
+  - [Available actions per endpoint](#available-actions-per-endpoint)
+  - [Pagination](#pagination)
+  - [Document operations](#document-operations)
+  - [Autorisaties and Notificaties](#autorisaties-and-notificaties)
+  - [Version awareness](#version-awareness)
+  - [Multiple connections](#multiple-connections)
+  - [Resolving resources by URL](#resolving-resources-by-url)
+- [Caching](#caching)
+- [Behaviour to be aware of](#behaviour-to-be-aware-of)
+- [Error handling](#error-handling)
+- [Typed layer (opt-in)](#typed-layer-opt-in)
+- [Events](#events)
+- [Testing](#testing)
+- [License](#license)
+
+## Quick guide
+
+The array API is the stable default: every endpoint returns plain arrays. The optional typed layer hydrates the same responses into DTOs, without taking the array API away. Configure a connection first (see [Quick start](#quick-start)), then:
+
+```php
+use Woweb\Zgw\Facades\Zgw;
+use Woweb\Zgw\Data\Typed;
+
+// Without the typed layer: arrays.
+$zaak = Zgw::connection('main')->zaken()->zaken()->show('uuid-here');
+$zaak['identificatie'];                 // string
+$zaak['startdatum'];                    // 'Y-m-d' string
+
+// With the typed layer: DTOs.
+$zaak = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->show('uuid-here');
+$zaak->identificatie;                   // string
+$zaak->startdatum;                      // CarbonImmutable|null
+$zaak->vertrouwelijkheidaanduiding;     // a backed enum, or null
+```
+
+See [Usage](#usage) for the full API surface and [Typed layer](#typed-layer-opt-in) for the DTOs and write builders.
 
 ## About
 
