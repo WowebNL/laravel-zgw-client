@@ -5,6 +5,11 @@ declare(strict_types=1);
 /**
  * Regenerates the typed read DTOs from the pinned ZGW OpenAPI specs.
  *
+ * The set of resources is discovered from the #[ZgwResource] attributes on the endpoints, so adding
+ * a typed resource is just annotating its endpoint. DTOs are generated per component into
+ * src/Data/Generated/{Component} (schema names are not unique across components, so each component
+ * gets its own namespace).
+ *
  * Run with `composer dto:generate`. Requires the spec fixtures to be present (run
  * `composer contract:fetch` first). The composer script also runs Pint over the output, so the
  * generated files are formatted identically to how they are committed and a regenerate with no
@@ -17,7 +22,19 @@ require __DIR__.'/../vendor/autoload.php';
 use Woweb\Zgw\Data\Casts\GeoJsonCast;
 use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Dev\Dto\DtoGenerator;
+use Woweb\Zgw\Dev\Dto\EndpointResources;
 use Woweb\Zgw\Dev\Dto\TypedMapGenerator;
+
+$root = dirname(__DIR__);
+$generatedDir = $root.'/src/Data/Generated';
+$baseNamespace = 'Woweb\\Zgw\\Data\\Generated';
+
+/**
+ * Object schemas kept as raw arrays rather than generated DTOs.
+ *
+ * @var list<string> $opaque
+ */
+$opaque = ['Processobject'];
 
 /**
  * Schema names mapped to a hand-written value object: stable, standardised structures (GeoJSON)
@@ -32,45 +49,51 @@ $valueObjects = [
     ],
 ];
 
-/** @var list<array{component: string, schema: string, opaque: list<string>}> $resources */
-$resources = [
-    [
-        'component' => 'zaken',
-        'schema' => 'Zaak',
-        'opaque' => ['Processobject'],
-    ],
-];
+// Discover the annotated resources and group the root schemas per component.
+$resources = EndpointResources::discover($root.'/src/Api/Endpoints', 'Woweb\\Zgw\\Api\\Endpoints');
 
-$root = dirname(__DIR__);
+/** @var array<string, list<string>> $rootsByComponent */
+$rootsByComponent = [];
+foreach ($resources as $resource) {
+    $rootsByComponent[$resource->component][$resource->schema] ??= true;
+}
+
+// Clear previously generated output so removed schemas do not linger.
+if (is_dir($generatedDir)) {
+    $entries = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($generatedDir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($entries as $entry) {
+        $entry->isDir() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+    }
+}
+
 $total = 0;
 
-foreach ($resources as $resource) {
+foreach ($rootsByComponent as $component => $schemas) {
+    $namespace = $baseNamespace.'\\'.EndpointResources::componentNamespace($component);
+
     $generator = new DtoGenerator(
-        component: $resource['component'],
-        rootSchema: $resource['schema'],
-        namespace: 'Woweb\\Zgw\\Data\\Generated',
-        outDir: $root.'/src/Data/Generated',
-        opaque: $resource['opaque'],
+        component: $component,
+        rootSchemas: array_keys($schemas),
+        namespace: $namespace,
+        outDir: $generatedDir.'/'.EndpointResources::componentNamespace($component),
+        opaque: $opaque,
         valueObjects: $valueObjects,
     );
 
-    $paths = $generator->generate();
-    $total += count($paths);
-
-    foreach ($paths as $path) {
-        echo 'wrote '.substr($path, strlen($root) + 1)."\n";
-    }
+    $total += count($generator->generate());
 }
 
 $mapGenerator = new TypedMapGenerator(
     endpointsDir: $root.'/src/Api/Endpoints',
     endpointNamespace: 'Woweb\\Zgw\\Api\\Endpoints',
-    dtoNamespace: 'Woweb\\Zgw\\Data\\Generated',
-    outFile: $root.'/src/Data/Generated/TypedMap.php',
+    dtoNamespace: $baseNamespace,
+    outFile: $generatedDir.'/TypedMap.php',
 );
 
-$mapPath = $mapGenerator->generate();
+$mapGenerator->generate();
 $total++;
-echo 'wrote '.substr($mapPath, strlen($root) + 1)."\n";
 
-echo "\n{$total} files generated.\n";
+echo "{$total} files generated across ".count($rootsByComponent)." components.\n";

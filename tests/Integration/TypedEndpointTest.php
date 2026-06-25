@@ -6,7 +6,7 @@ namespace Woweb\Zgw\Tests\Integration;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
-use Woweb\Zgw\Data\Generated\ZaakData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakData;
 use Woweb\Zgw\Data\Typed;
 use Woweb\Zgw\Data\Values\Reference;
 use Woweb\Zgw\Facades\Zgw;

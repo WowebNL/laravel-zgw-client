@@ -46,9 +46,9 @@ final class DtoGenerator
     private array $files = [];
 
     /**
-     * @param  string  $component  ZGW component the schema lives in (for example "zaken").
-     * @param  string  $rootSchema  Root schema name (for example "Zaak").
-     * @param  string  $namespace  Base namespace for generated objects (for example Woweb\Zgw\Data\Generated).
+     * @param  string  $component  ZGW component the schemas live in (for example "zaken").
+     * @param  list<string>  $rootSchemas  Root resource schema names for this component (each becomes a {Schema}Data DTO).
+     * @param  string  $namespace  Base namespace for the generated objects of this component.
      * @param  string  $outDir  Directory the objects are written to.
      * @param  list<string>  $opaque  Object schema names kept as raw arrays rather than generated DTOs.
      * @param  array<string, array{type: class-string, cast: class-string}>  $valueObjects  Schema
@@ -57,7 +57,7 @@ final class DtoGenerator
      */
     public function __construct(
         private readonly string $component,
-        private readonly string $rootSchema,
+        private readonly array $rootSchemas,
         private readonly string $namespace,
         private readonly string $outDir,
         private readonly array $opaque = [],
@@ -71,7 +71,9 @@ final class DtoGenerator
     {
         $this->loadSpecs();
 
-        $this->objectQueue[$this->rootSchema] = true;
+        foreach ($this->rootSchemas as $root) {
+            $this->objectQueue[$root] = true;
+        }
 
         while ($this->objectQueue !== []) {
             $name = array_key_first($this->objectQueue);
@@ -513,6 +515,32 @@ final class DtoGenerator
         return "<?php\n\ndeclare(strict_types=1);\n\n".self::HEADER."\n\nnamespace {$this->namespace};\n\n{$useBlock}\n\n{$doc}\nclass {$className} extends Data\n{\n{$body}{$castsBlock}\n}\n";
     }
 
+    /**
+     * Turn an enum value into a valid, unique PHP case name. ZGW has enums whose values contain
+     * spaces and punctuation (display labels) and values that start with a digit, so the raw value
+     * cannot be used as an identifier.
+     *
+     * @param  array<string, bool>  $seen
+     */
+    private function enumCaseName(string $value, array &$seen): string
+    {
+        $name = Str::studly((string) preg_replace('/[^A-Za-z0-9]+/', ' ', $value));
+
+        if ($name === '' || ctype_digit($name[0])) {
+            $name = 'Value'.$name;
+        }
+
+        $candidate = $name;
+        $suffix = 2;
+        while (isset($seen[$candidate])) {
+            $candidate = $name.$suffix;
+            $suffix++;
+        }
+        $seen[$candidate] = true;
+
+        return $candidate;
+    }
+
     private function generateEnum(string $refName): void
     {
         $schema = $this->latest->componentSchema($refName);
@@ -520,12 +548,13 @@ final class DtoGenerator
         $enumName = $this->enumClass($refName);
 
         $cases = [];
+        $seen = [];
         foreach ($values as $value) {
             if (! is_string($value) || $value === '') {
                 continue;
             }
-            $case = Str::studly($value);
-            $cases[] = "    case {$case} = '{$value}';";
+            $case = $this->enumCaseName($value, $seen);
+            $cases[] = "    case {$case} = ".var_export($value, true).';';
         }
 
         $body = implode("\n", $cases);

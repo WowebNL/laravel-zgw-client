@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Dev\Dto;
 
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use ReflectionClass;
 use RuntimeException;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 /**
- * Generates the endpoint to DTO map (TypedMap) by reflecting every endpoint for the #[ZgwResource]
- * attribute. The map is generated rather than hand-maintained so it cannot drift from the DTOs.
+ * Generates the endpoint to DTO map (TypedMap) from the #[ZgwResource] attributes on the endpoints.
+ * The map is generated rather than hand-maintained so it cannot drift from the DTOs.
  */
 final class TypedMapGenerator
 {
     /**
      * @param  string  $endpointsDir  Directory holding the endpoint classes.
      * @param  string  $endpointNamespace  Base namespace of those endpoints.
-     * @param  string  $dtoNamespace  Namespace the generated DTOs live in.
+     * @param  string  $dtoNamespace  Base namespace the generated DTOs live in (component sub-namespaces below it).
      * @param  string  $outFile  Path of the TypedMap file to write.
      */
     public function __construct(
@@ -33,19 +29,9 @@ final class TypedMapGenerator
     {
         $map = [];
 
-        foreach ($this->endpointClasses() as $class) {
-            $reflection = new ReflectionClass($class);
-            $attributes = $reflection->getAttributes(ZgwResource::class);
-
-            if ($attributes === []) {
-                continue;
-            }
-
-            $resource = $attributes[0]->newInstance();
-            $map[$class] = $this->dtoNamespace.'\\'.$resource->schema.'Data';
+        foreach (EndpointResources::discover($this->endpointsDir, $this->endpointNamespace) as $endpoint => $resource) {
+            $map[$endpoint] = EndpointResources::dtoClass($this->dtoNamespace, $resource);
         }
-
-        ksort($map);
 
         $lines = [];
         foreach ($map as $endpoint => $dto) {
@@ -69,30 +55,5 @@ final class TypedMapGenerator
         file_put_contents($this->outFile, $contents);
 
         return $this->outFile;
-    }
-
-    /**
-     * @return list<class-string>
-     */
-    private function endpointClasses(): array
-    {
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->endpointsDir));
-        $classes = [];
-
-        foreach ($iterator as $file) {
-            if (! $file instanceof \SplFileInfo || $file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $relative = substr($file->getPathname(), strlen($this->endpointsDir) + 1, -4);
-            $class = $this->endpointNamespace.'\\'.str_replace('/', '\\', $relative);
-
-            if (class_exists($class)) {
-                /** @var class-string $class */
-                $classes[] = $class;
-            }
-        }
-
-        return $classes;
     }
 }

@@ -14,8 +14,10 @@ use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // The besluiten linked to a specific zaak. A relation resource: create, read and delete.
+#[ZgwResource(schema: 'ZaakBesluit', component: 'zaken')]
 class ZaakBesluiten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, ShowsResource
 {
     use Delete;

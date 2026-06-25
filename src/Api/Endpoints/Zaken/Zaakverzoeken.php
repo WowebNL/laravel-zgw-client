@@ -13,8 +13,10 @@ use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // A relation between a zaak and a verzoek: create, read and delete.
+#[ZgwResource(schema: 'ZaakVerzoek', component: 'zaken')]
 class Zaakverzoeken extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, ShowsResource
 {
     use Delete;

@@ -13,9 +13,11 @@ use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // An object-informatieobject is a relation: the ZGW Documenten API supports create, read and
 // delete, but not update.
+#[ZgwResource(schema: 'ObjectInformatieObject', component: 'documenten')]
 class Objectinformatieobjecten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, ShowsResource
 {
     use Delete;

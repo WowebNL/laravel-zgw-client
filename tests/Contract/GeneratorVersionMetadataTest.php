@@ -53,8 +53,8 @@ class GeneratorVersionMetadataTest extends ContractTestCase
     {
         (new DtoGenerator(
             component: 'documenten',
-            rootSchema: 'EnkelvoudigInformatieObject',
-            namespace: 'Woweb\\Zgw\\Data\\Generated',
+            rootSchemas: ['EnkelvoudigInformatieObject'],
+            namespace: 'Woweb\\Zgw\\Data\\Generated\\Documenten',
             outDir: $this->tmpDir,
         ))->generate();
 

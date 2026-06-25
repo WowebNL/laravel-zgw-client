@@ -7,12 +7,12 @@ namespace Woweb\Zgw\Tests\Unit\Data;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\TestCase;
-use Woweb\Zgw\Data\Generated\Enums\AardRelatie;
-use Woweb\Zgw\Data\Generated\Enums\Archiefnominatie;
-use Woweb\Zgw\Data\Generated\Enums\Vertrouwelijkheidaanduiding;
-use Woweb\Zgw\Data\Generated\RelevanteZaak;
-use Woweb\Zgw\Data\Generated\Verlenging;
-use Woweb\Zgw\Data\Generated\ZaakData;
+use Woweb\Zgw\Data\Generated\Zaken\Enums\AardRelatie;
+use Woweb\Zgw\Data\Generated\Zaken\Enums\Archiefnominatie;
+use Woweb\Zgw\Data\Generated\Zaken\Enums\Vertrouwelijkheidaanduiding;
+use Woweb\Zgw\Data\Generated\Zaken\RelevanteZaak;
+use Woweb\Zgw\Data\Generated\Zaken\Verlenging;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakData;
 use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Data\Values\Reference;
 

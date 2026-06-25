@@ -17,8 +17,10 @@ use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // Relations between a zaaktype and its informatieobjecttypen.
+#[ZgwResource(schema: 'ZaakTypeInformatieObjectType', component: 'catalogi')]
 class ZaaktypeInformatieobjecttypen extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ReplacesResource, ShowsResource
 {
     use Delete;

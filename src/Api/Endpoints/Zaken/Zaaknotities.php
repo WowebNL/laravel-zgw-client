@@ -17,8 +17,10 @@ use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // Zaaknotities were introduced in ZGW 1.7; the per-version guard rejects them on older connections.
+#[ZgwResource(schema: 'ZaakNotitie', component: 'zaken')]
 class Zaaknotities extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ReplacesResource, ShowsResource
 {
     use Delete;

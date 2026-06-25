@@ -11,7 +11,9 @@ use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
+#[ZgwResource(schema: 'KlantContact', component: 'zaken')]
 class Klantcontacten extends AbstractEndpoint implements CreatesResource, ListsResources, ShowsResource
 {
     use Index;
