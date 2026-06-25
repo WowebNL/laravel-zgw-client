@@ -57,7 +57,10 @@
             "@contract:fetch",
             "@php vendor/bin/phpunit tests/Contract/CoverageReportTest.php"
         ],
-        "dto:generate": "@php scripts/generate-dtos.php"
+        "dto:generate": [
+            "@php scripts/generate-dtos.php",
+            "@php vendor/bin/pint src/Data/Generated --quiet"
+        ]
     },
     "config": {
         "optimize-autoloader": true,

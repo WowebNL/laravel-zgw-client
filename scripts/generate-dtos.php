@@ -6,8 +6,10 @@ declare(strict_types=1);
  * Regenerates the typed read DTOs from the pinned ZGW OpenAPI specs.
  *
  * Run with `composer dto:generate`. Requires the spec fixtures to be present (run
- * `composer contract:fetch` first). The generated files under src/Data/Generated are committed,
- * so the runtime never carries the generator. Review the git diff of that directory after running.
+ * `composer contract:fetch` first). The composer script also runs Pint over the output, so the
+ * generated files are formatted identically to how they are committed and a regenerate with no
+ * spec change yields no diff. The generated files under src/Data/Generated are committed, so the
+ * runtime never carries the generator. Review the git diff of that directory after running.
  */
 
 require __DIR__.'/../vendor/autoload.php';
