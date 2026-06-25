@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `retry_max_sleep_ms`), off by default. Only idempotent requests are retried, only on a connection
   error, a 429 or a 5xx, honouring a `Retry-After` header. Create and update calls are never retried.
 - A `ZgwRequestSent` event dispatched after every response, for request-level audit logging.
+- Typed DTO layer (opt-in, in the `Woweb\Zgw\Data` namespace), built additively on top of the
+  array kernel. Tolerant hydration (missing fields become null, unknown fields are kept in
+  `extra`, the raw response in `raw`), casts for dates, durations, references, enums and nested
+  DTOs, and a `Typed::wrap()` decorator that turns an endpoint into one that returns DTOs while the
+  array API stays available. Read DTOs are generated from the pinned OpenAPI specs with
+  `composer dto:generate` (a require-dev tool, output committed) and kept in step with the specs by
+  a coverage test. Writes use separate builders whose payload contains only the fields you set, so
+  a PATCH never clears a field by accident. This release ships the Zaak resource as the first
+  vertical slice; remaining resources follow.
 
 ### Changed
 

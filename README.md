@@ -416,6 +416,40 @@ All exceptions extend `Woweb\Zgw\Exceptions\ZgwException`, so you can catch the 
 | `PaginationLimitException` | Auto-pagination exceeded `max_pages`. |
 | `InvalidIdentifierException` | A resource identifier contained characters that are not allowed in a URL segment. |
 
+## Typed layer (opt-in)
+
+By default every endpoint returns plain arrays, which is the stable, spec-immune substrate. On top of that sits an opt-in typed layer in the `Woweb\Zgw\Data` namespace that hydrates those arrays into DTOs. The array API never goes away: it is the bulk and forward-compatible path, and the DTOs run on top of it.
+
+```php
+use Woweb\Zgw\Data\Typed;
+
+// One DTO back.
+$zaak = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->show($uuid);
+$zaak->startdatum;                  // CarbonImmutable|null
+$zaak->vertrouwelijkheidaanduiding; // a backed enum, or null for an unknown value
+$zaak->zaaktype?->uuid();           // a Reference value object (no I/O)
+
+// A lazy collection of DTOs (->take(n) still stops early).
+$zaken = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->index();
+
+// The array route stays available for bulk and ETL.
+Typed::wrap(Zgw::connection('main')->zaken()->zaken())->endpoint()->index();
+```
+
+Hydration is tolerant: a missing field becomes null, an unknown field is kept in `$extra` (so a value added by a newer ZGW release is never dropped before the DTOs are regenerated), and the untouched response is kept in `$raw`. Writes use a separate builder whose payload contains only the fields you set, so a PATCH never clears a field by accident; set a field to null to clear it deliberately.
+
+```php
+use Woweb\Zgw\Data\Writes\ZaakWrite;
+
+$payload = (new ZaakWrite)
+    ->toelichting('Bijgewerkt na controle')
+    ->toPayload();
+
+Zgw::connection('main')->zaken()->zaken()->patch($uuid, $payload);
+```
+
+The DTOs are generated from the pinned OpenAPI specs with `composer dto:generate` (a require-dev tool; the output is committed, so the runtime never carries the generator). This release ships the Zaak resource as the first slice; the remaining resources follow.
+
 ## Events
 
 A `Woweb\Zgw\Events\ZgwRequestSent` event is dispatched after every request that receives a response. It carries the connection name, the `client_id`, the HTTP method, the request URI and the response status code. This is a seam for request-level audit logging (for example an ISO 27001 audit trail); with no listeners registered it costs nothing.

@@ -30,7 +30,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Woweb\\Zgw\\Tests\\": "tests/"
+            "Woweb\\Zgw\\Tests\\": "tests/",
+            "Woweb\\Zgw\\Dev\\": "dev/"
         }
     },
     "extra": {
@@ -55,7 +56,8 @@
         "contract:coverage": [
             "@contract:fetch",
             "@php vendor/bin/phpunit tests/Contract/CoverageReportTest.php"
-        ]
+        ],
+        "dto:generate": "@php scripts/generate-dtos.php"
     },
     "config": {
         "optimize-autoloader": true,
