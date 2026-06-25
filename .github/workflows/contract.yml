@@ -60,12 +60,46 @@ jobs:
           path: build/zgw-coverage-${{ matrix.release }}.md
           if-no-files-found: ignore
 
+  # All releases at once, so the cross-release checks (DTO superset coverage and the @since /
+  # @deprecated version metadata) can compare a schema across releases. The per-release matrix
+  # above only ever has one release present, so those checks skip there and run here for real.
+  contract-all-releases:
+    name: Contract (all releases)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: yaml
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer config --no-plugins policy.advisories.block false || true
+          composer update --prefer-dist --no-interaction
+
+      - name: Cache fetched specs
+        uses: actions/cache@v4
+        with:
+          path: tests/fixtures/specs
+          key: zgw-specs-${{ hashFiles('tests/Contract/releases.json') }}-all
+
+      - name: Fetch all releases
+        run: php scripts/fetch-specs.php
+
+      - name: Run contract tests
+        run: vendor/bin/phpunit --testsuite Contract
+
   # Aggregate gate so branch protection can require a single stable "contract" check.
   contract-pass:
     name: contract
     runs-on: ubuntu-latest
-    needs: contract
+    needs: [contract, contract-all-releases]
     if: always()
     steps:
-      - name: Verify all matrix jobs passed
-        run: '[ "${{ needs.contract.result }}" = "success" ]'
+      - name: Verify all contract jobs passed
+        run: '[ "${{ needs.contract.result }}" = "success" ] && [ "${{ needs.contract-all-releases.result }}" = "success" ]'
