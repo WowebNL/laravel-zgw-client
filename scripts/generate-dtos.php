@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 require __DIR__.'/../vendor/autoload.php';
 
+use Woweb\Zgw\Data\Casts\GeoJsonCast;
+use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Dev\Dto\DtoGenerator;
 use Woweb\Zgw\Dev\Dto\TypedMapGenerator;
 
@@ -23,8 +25,8 @@ use Woweb\Zgw\Dev\Dto\TypedMapGenerator;
  */
 $valueObjects = [
     'GeoJSONGeometry' => [
-        'type' => \Woweb\Zgw\Data\Values\GeoJsonGeometry::class,
-        'cast' => \Woweb\Zgw\Data\Casts\GeoJsonCast::class,
+        'type' => GeoJsonGeometry::class,
+        'cast' => GeoJsonCast::class,
     ],
 ];
 
