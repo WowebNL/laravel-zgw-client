@@ -87,7 +87,23 @@ class ZgwResourceMappingTest extends ContractTestCase
             }
         }
 
-        $this->fail("Schema [{$schema}] declared by [{$endpoint}] was not found in any fetched {$component} spec.");
+        // A resource can be release-specific (for example ZaakNotitie is ZGW 1.7+), so when only
+        // some releases are fetched its schema may legitimately be absent here. Only fail when all
+        // releases are present (the all-releases contract job); otherwise defer to that job.
+        if ($this->hasAllReleases($component)) {
+            $this->fail("Schema [{$schema}] declared by [{$endpoint}] was not found in any {$component} spec.");
+        }
+    }
+
+    private function hasAllReleases(string $component): bool
+    {
+        foreach (array_keys(ReleaseMatrix::releases()) as $release) {
+            if (ReleaseMatrix::specFile($release, $component) === null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
