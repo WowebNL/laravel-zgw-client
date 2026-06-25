@@ -30,11 +30,17 @@ class DtoCoverageTest extends ContractTestCase
 
             $declared = $this->declaredFields($dtoClass);
 
+            // Every field the fetched specs define must have a DTO property. This holds per release.
             $missing = array_values(array_diff($specFields, $declared));
-            $orphan = array_values(array_diff($declared, $specFields));
-
             $this->assertSame([], $missing, "These {$source['schema']} spec fields have no property on {$dtoClass}: ".implode(', ', $missing));
-            $this->assertSame([], $orphan, "These {$dtoClass} properties are not in any {$source['schema']} spec: ".implode(', ', $orphan));
+
+            // The reverse (no DTO property without a spec field) is only valid against the full
+            // cross-release union: a field added in a later release would look orphaned in a job
+            // that only fetched an earlier release. So only assert it when all releases are present.
+            if ($this->hasAllReleases($source['component'])) {
+                $orphan = array_values(array_diff($declared, $specFields));
+                $this->assertSame([], $orphan, "These {$dtoClass} properties are not in any {$source['schema']} spec: ".implode(', ', $orphan));
+            }
 
             $checked++;
         }
@@ -71,6 +77,21 @@ class DtoCoverageTest extends ContractTestCase
         }
 
         return array_keys($fields);
+    }
+
+    /**
+     * Whether every declared release has this component's spec fetched, so the cross-release union
+     * of fields is complete (and the orphan check is meaningful).
+     */
+    private function hasAllReleases(string $component): bool
+    {
+        foreach (array_keys(ReleaseMatrix::releases()) as $release) {
+            if (ReleaseMatrix::specFile($release, $component) === null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

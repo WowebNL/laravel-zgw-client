@@ -23,7 +23,7 @@ final class GeneratedDtos
      */
     public static function all(): array
     {
-        $dir = dirname(__DIR__, 2).'/src/Data/Generated';
+        $dir = dirname(__DIR__, 3).'/src/Data/Generated';
 
         if (! is_dir($dir)) {
             return [];
