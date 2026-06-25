@@ -17,7 +17,7 @@ For security issues, follow [SECURITY.md](SECURITY.md) instead of opening a publ
 composer install
 ```
 
-The package targets PHP 8.2 and Laravel 11 through 13. Code uses `declare(strict_types=1)`
+The package targets PHP 8.2 and Laravel 12 and 13. Code uses `declare(strict_types=1)`
 everywhere and is analysed at PHPStan level 8.
 
 ## Quality gates
