@@ -257,6 +257,116 @@ final class SpecModel
     }
 
     /**
+     * Resolve a schema's discriminator into the polymorphic sub-object it selects.
+     *
+     * ZGW models polymorphism as a base schema carrying a `discriminator` whose `propertyName` is a
+     * sibling enum field, plus a `mapping` of each value to a subtype shaped allOf[Base,
+     * {x}_identificatie]. That extra allOf member holds a single property (for example
+     * betrokkeneIdentificatie or objectIdentificatie) pointing at the value's leaf schema (for
+     * example RolMedewerker or ObjectAdres). This returns the discriminator property name, that
+     * single polymorphic field name, and the map of discriminator value to leaf schema name.
+     *
+     * Values whose subtype adds no identificatie member (the object is then carried by a URL field)
+     * are omitted from the map. Returns null when the schema has no usable discriminator.
+     *
+     * @return array{property: string, field: string, map: array<string, string>}|null
+     */
+    public function discriminatorResolution(string $schemaName): ?array
+    {
+        $schema = $this->componentSchema($schemaName);
+
+        if ($schema === null || ! isset($schema['discriminator']) || ! is_array($schema['discriminator'])) {
+            return null;
+        }
+
+        $discriminator = $schema['discriminator'];
+        $property = isset($discriminator['propertyName']) ? (string) $discriminator['propertyName'] : null;
+        $mapping = isset($discriminator['mapping']) && is_array($discriminator['mapping']) ? $discriminator['mapping'] : [];
+
+        if ($property === null || $mapping === []) {
+            return null;
+        }
+
+        $field = null;
+        $map = [];
+
+        foreach ($mapping as $value => $ref) {
+            if (! is_string($ref)) {
+                continue;
+            }
+
+            $subtype = $this->resolveInternalRef($ref);
+            $members = is_array($subtype['allOf'] ?? null) ? $subtype['allOf'] : [];
+
+            foreach ($members as $member) {
+                if (! is_array($member) || ! isset($member['$ref']) || ! is_string($member['$ref'])) {
+                    continue;
+                }
+
+                if ($this->basename($member['$ref']) === $schemaName) {
+                    continue; // The base schema; the subtype adds only the identificatie member.
+                }
+
+                $memberSchema = $this->resolveInternalRef($member['$ref']);
+                $properties = is_array($memberSchema['properties'] ?? null) ? $memberSchema['properties'] : [];
+
+                foreach ($properties as $name => $sub) {
+                    if (! is_array($sub)) {
+                        continue;
+                    }
+
+                    $field = (string) $name;
+                    $leaf = $this->leafRef($sub);
+
+                    if ($leaf !== null) {
+                        $map[(string) $value] = $leaf;
+                    }
+                }
+            }
+        }
+
+        if ($field === null || $map === []) {
+            return null;
+        }
+
+        return ['property' => $property, 'field' => $field, 'map' => $map];
+    }
+
+    /**
+     * The leaf schema name a property points at, unwrapping a direct $ref or a single-member
+     * allOf/oneOf/anyOf, or null when the property is not a reference.
+     *
+     * @param  array<string, mixed>  $schema
+     */
+    private function leafRef(array $schema): ?string
+    {
+        if (isset($schema['$ref']) && is_string($schema['$ref'])) {
+            return $this->basename($schema['$ref']);
+        }
+
+        foreach (['allOf', 'oneOf', 'anyOf'] as $combiner) {
+            if (! isset($schema[$combiner]) || ! is_array($schema[$combiner])) {
+                continue;
+            }
+
+            foreach ($schema[$combiner] as $member) {
+                if (is_array($member) && isset($member['$ref']) && is_string($member['$ref'])) {
+                    return $this->basename($member['$ref']);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function basename(string $ref): string
+    {
+        $parts = explode('/', $ref);
+
+        return (string) end($parts);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function operation(string $path, string $method): array

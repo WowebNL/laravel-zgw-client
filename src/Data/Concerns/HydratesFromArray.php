@@ -7,6 +7,7 @@ namespace Woweb\Zgw\Data\Concerns;
 use ReflectionClass;
 use ReflectionProperty;
 use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\RowAware;
 
 /**
  * Tolerant hydration of a DTO from a raw ZGW response array.
@@ -51,7 +52,12 @@ trait HydratesFromArray
             $value = $raw[$name] ?? null;
 
             if ($value !== null && isset($casts[$name])) {
-                $value = $casts[$name]->cast($value);
+                $cast = $casts[$name];
+                // A row-aware cast (a polymorphic field that keys off a sibling) needs the whole
+                // response; an ordinary cast only sees its own value.
+                $value = $cast instanceof RowAware
+                    ? $cast->castWithRow($value, $raw)
+                    : $cast->cast($value);
             }
 
             $property->setValue($dto, $value);

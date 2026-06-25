@@ -49,6 +49,35 @@ $valueObjects = [
     ],
 ];
 
+/**
+ * Per discriminated schema, how its polymorphic sub-object is typed. Discriminators are detected
+ * from the specs; this only narrows the typed set and chooses the fallback for unmapped values.
+ *
+ * Rol is fully typed: all five betrokkeneType subtypes get a DTO, and an unknown value resolves to
+ * null. ZaakObject has 31 objectType subtypes, most of them niche BGT/BAG geo-objects; only the
+ * common administrative ones are typed and every other value keeps its raw objectIdentificatie
+ * (fallbackToRaw) rather than being dropped. Widening the ZaakObject set is just adding a value
+ * here and regenerating.
+ *
+ * @var array<string, array{only?: list<string>, fallbackToRaw?: bool}> $discriminators
+ */
+$discriminators = [
+    'ZaakObject' => [
+        'only' => [
+            'adres',
+            'pand',
+            'kadastrale_onroerende_zaak',
+            'woz_object',
+            'openbare_ruimte',
+            'woonplaats',
+            'natuurlijk_persoon',
+            'niet_natuurlijk_persoon',
+            'vestiging',
+        ],
+        'fallbackToRaw' => true,
+    ],
+];
+
 // Discover the annotated resources and group the root schemas per component.
 $resources = EndpointResources::discover($root.'/src/Api/Endpoints', 'Woweb\\Zgw\\Api\\Endpoints');
 
@@ -81,6 +110,7 @@ foreach ($rootsByComponent as $component => $schemas) {
         outDir: $generatedDir.'/'.EndpointResources::componentNamespace($component),
         opaque: $opaque,
         valueObjects: $valueObjects,
+        discriminators: $discriminators,
     );
 
     $total += count($generator->generate());

@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Generated\Zaken;
 
 use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\DiscriminatorCast;
 use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
@@ -45,6 +46,9 @@ class ZaakObjectData extends Data
     /** @deprecated Removed in ZGW 1.6 */
     public ?ZaakObjectEmbedded $_expand;
 
+    /** @var ObjectAdres|ObjectKadastraleOnroerendeZaak|RolNatuurlijkPersoon|RolNietNatuurlijkPersoon|ObjectOpenbareRuimte|ObjectPand|RolVestiging|ObjectWoonplaats|ObjectWozObject|array<string, mixed>|null */
+    public mixed $objectIdentificatie;
+
     /**
      * @return array<string, Cast>
      */
@@ -58,6 +62,7 @@ class ZaakObjectData extends Data
             'objectType' => new EnumCast(ObjectType::class),
             'objectTypeOverigeDefinitie' => new DtoCast(ObjectTypeOverigeDefinitie::class),
             '_expand' => new DtoCast(ZaakObjectEmbedded::class),
+            'objectIdentificatie' => new DiscriminatorCast('objectType', ['adres' => ObjectAdres::class, 'kadastrale_onroerende_zaak' => ObjectKadastraleOnroerendeZaak::class, 'natuurlijk_persoon' => RolNatuurlijkPersoon::class, 'niet_natuurlijk_persoon' => RolNietNatuurlijkPersoon::class, 'openbare_ruimte' => ObjectOpenbareRuimte::class, 'pand' => ObjectPand::class, 'vestiging' => RolVestiging::class, 'woonplaats' => ObjectWoonplaats::class, 'woz_object' => ObjectWozObject::class], true),
         ];
     }
 }

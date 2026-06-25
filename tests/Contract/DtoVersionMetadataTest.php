@@ -97,7 +97,20 @@ class DtoVersionMetadataTest extends ContractTestCase
             $spec = $this->loadSpec($release, $component);
             $schemaArray = $spec->componentSchema($schema);
 
-            if ($schemaArray !== null && in_array($field, $spec->schemaProperties($schemaArray), true)) {
+            if ($schemaArray === null) {
+                continue;
+            }
+
+            if (in_array($field, $spec->schemaProperties($schemaArray), true)) {
+                $present[] = $release;
+
+                continue;
+            }
+
+            // The polymorphic sub-object field of a discriminated schema is present in a release
+            // exactly when that release's schema is discriminated.
+            $resolution = $spec->discriminatorResolution($schema);
+            if ($resolution !== null && $resolution['field'] === $field) {
                 $present[] = $release;
             }
         }

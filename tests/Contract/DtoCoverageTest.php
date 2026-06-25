@@ -74,6 +74,13 @@ class DtoCoverageTest extends ContractTestCase
             foreach ($spec->schemaProperties($schemaArray) as $name) {
                 $fields[$name] = true;
             }
+
+            // A discriminated schema (Rol, ZaakObject) carries a polymorphic sub-object field that
+            // lives only on its subtypes, so it is not in schemaProperties but is a real DTO field.
+            $resolution = $spec->discriminatorResolution($schema);
+            if ($resolution !== null) {
+                $fields[$resolution['field']] = true;
+            }
         }
 
         return array_keys($fields);

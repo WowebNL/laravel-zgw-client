@@ -9,6 +9,7 @@ namespace Woweb\Zgw\Data\Generated\Zaken;
 use Carbon\CarbonImmutable;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DiscriminatorCast;
 use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
@@ -59,6 +60,9 @@ class RolData extends Data
     /** @deprecated Removed in ZGW 1.6 */
     public ?RolEmbedded $_expand;
 
+    /** @var RolMedewerker|RolNatuurlijkPersoon|RolNietNatuurlijkPersoon|RolOrganisatorischeEenheid|RolVestiging|null */
+    public ?Data $betrokkeneIdentificatie;
+
     /**
      * @return array<string, Cast>
      */
@@ -74,6 +78,7 @@ class RolData extends Data
             'indicatieMachtiging' => new EnumCast(IndicatieMachtiging::class),
             'contactpersoonRol' => new DtoCast(ContactPersoonRol::class),
             '_expand' => new DtoCast(RolEmbedded::class),
+            'betrokkeneIdentificatie' => new DiscriminatorCast('betrokkeneType', ['medewerker' => RolMedewerker::class, 'natuurlijk_persoon' => RolNatuurlijkPersoon::class, 'niet_natuurlijk_persoon' => RolNietNatuurlijkPersoon::class, 'organisatorische_eenheid' => RolOrganisatorischeEenheid::class, 'vestiging' => RolVestiging::class]),
         ];
     }
 }
