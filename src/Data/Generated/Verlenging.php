@@ -13,6 +13,8 @@ use Woweb\Zgw\Data\Data;
 
 /**
  * Generated from the ZGW "Verlenging" schema (component: zaken).
+ *
+ * @zgw-schema zaken:Verlenging
  */
 class Verlenging extends Data
 {

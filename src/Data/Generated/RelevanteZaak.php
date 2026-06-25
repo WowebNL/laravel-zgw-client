@@ -15,6 +15,8 @@ use Woweb\Zgw\Data\Values\Reference;
 
 /**
  * Generated from the ZGW "RelevanteZaak" schema (component: zaken).
+ *
+ * @zgw-schema zaken:RelevanteZaak
  */
 class RelevanteZaak extends Data
 {

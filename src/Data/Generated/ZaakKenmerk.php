@@ -10,6 +10,8 @@ use Woweb\Zgw\Data\Data;
 
 /**
  * Generated from the ZGW "ZaakKenmerk" schema (component: zaken).
+ *
+ * @zgw-schema zaken:ZaakKenmerk
  */
 class ZaakKenmerk extends Data
 {

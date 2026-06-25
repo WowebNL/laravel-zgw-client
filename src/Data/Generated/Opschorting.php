@@ -10,6 +10,8 @@ use Woweb\Zgw\Data\Data;
 
 /**
  * Generated from the ZGW "Opschorting" schema (component: zaken).
+ *
+ * @zgw-schema zaken:Opschorting
  */
 class Opschorting extends Data
 {
