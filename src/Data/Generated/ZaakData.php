@@ -27,6 +27,8 @@ use Woweb\Zgw\Data\Values\Reference;
  *
  * Superset of the fields across releases 1.5, 1.6, 1.7. A field that does not exist in
  * the release a connection targets hydrates to null.
+ *
+ * @zgw-schema zaken:Zaak
  */
 class ZaakData extends Data
 {

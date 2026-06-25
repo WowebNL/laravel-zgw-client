@@ -129,24 +129,51 @@ final class DtoGenerator
 
     private function generateObject(string $schemaName, bool $isRoot): void
     {
-        $schema = $this->latest->componentSchema($schemaName);
-
-        if ($schema === null) {
-            throw new RuntimeException("Schema [{$schemaName}] not found in the latest {$this->component} spec.");
+        // The merged properties of this schema per release, so the DTO can be a true superset
+        // across releases and carry per-field version metadata.
+        $perRelease = [];
+        foreach ($this->releaseOrder as $release) {
+            $schema = $this->specsByRelease[$release]->componentSchema($schemaName);
+            if ($schema !== null) {
+                $perRelease[$release] = $this->mergedProperties($this->specsByRelease[$release], $schema);
+            }
         }
 
-        $properties = $this->mergedProperties($this->latest, $schema);
+        if ($perRelease === []) {
+            throw new RuntimeException("Schema [{$schemaName}] not found in any {$this->component} spec.");
+        }
+
+        // Union of field names: newest release first (so the order follows the current spec), then
+        // any field that only exists in an older release appended after.
+        $order = [];
+        foreach (array_reverse($this->releaseOrder) as $release) {
+            foreach (array_keys($perRelease[$release] ?? []) as $field) {
+                if (! in_array($field, $order, true)) {
+                    $order[] = $field;
+                }
+            }
+        }
+
         $className = $isRoot ? $schemaName.'Data' : $schemaName;
 
         $fields = [];
         $casts = [];
         $imports = ['Woweb\Zgw\Data\Data'];
 
-        foreach ($properties as $field => $propSchema) {
-            $descriptor = $this->describe($propSchema);
-            $since = $this->sinceFor($schemaName, $field);
+        foreach ($order as $field) {
+            $present = array_values(array_filter(
+                $this->releaseOrder,
+                static fn (string $release): bool => isset($perRelease[$release][$field]),
+            ));
 
-            $fields[] = $this->renderField($field, $descriptor, $since);
+            // Type and cast come from the newest release that still defines the field.
+            $sourceRelease = $present[count($present) - 1];
+            $descriptor = $this->describe($perRelease[$sourceRelease][$field], $this->specsByRelease[$sourceRelease]);
+
+            $since = $present[0] === $this->releaseOrder[0] ? null : $present[0];
+            $removedIn = $this->removedIn($present);
+
+            $fields[] = $this->renderField($field, $descriptor, $since, $removedIn);
 
             foreach ($descriptor['imports'] as $import) {
                 $imports[] = $import;
@@ -163,14 +190,32 @@ final class DtoGenerator
     }
 
     /**
+     * The first release in which a field is no longer present (it existed earlier and was removed),
+     * or null when the field still exists in the newest release.
+     *
+     * @param  list<string>  $present  Releases in which the field appears, oldest first.
+     */
+    private function removedIn(array $present): ?string
+    {
+        $lastPresent = $present[count($present) - 1];
+        $index = array_search($lastPresent, $this->releaseOrder, true);
+
+        if ($index === false || $index === count($this->releaseOrder) - 1) {
+            return null;
+        }
+
+        return $this->releaseOrder[$index + 1];
+    }
+
+    /**
      * Resolve a property schema into a field descriptor.
      *
      * @param  array<string, mixed>  $propSchema
      * @return array{php: string, doc: ?string, cast: ?string, castImport: ?string, imports: list<string>}
      */
-    private function describe(array $propSchema): array
+    private function describe(array $propSchema, SpecModel $spec): array
     {
-        [$resolved, $refName] = $this->unwrap($propSchema);
+        [$resolved, $refName] = $this->unwrap($propSchema, $spec);
 
         // Value object reference: a stable, standardised structure modelled as a hand-written value
         // object (for example GeoJSON). Handled first because such schemas are polymorphic and need
@@ -232,7 +277,7 @@ final class DtoGenerator
 
         // Arrays.
         if ($type === 'array') {
-            return $this->describeArray($resolved);
+            return $this->describeArray($resolved, $spec);
         }
 
         // Scalars by format.
@@ -279,10 +324,10 @@ final class DtoGenerator
      * @param  array<string, mixed>  $resolved
      * @return array{php: string, doc: ?string, cast: ?string, castImport: ?string, imports: list<string>}
      */
-    private function describeArray(array $resolved): array
+    private function describeArray(array $resolved, SpecModel $spec): array
     {
         $items = is_array($resolved['items'] ?? null) ? $resolved['items'] : [];
-        [$itemResolved, $itemRef] = $this->unwrap($items);
+        [$itemResolved, $itemRef] = $this->unwrap($items, $spec);
 
         if ($itemRef !== null && isset($itemResolved['properties']) && ! in_array($itemRef, $this->opaque, true)) {
             $this->objectQueue[$itemRef] ??= false;
@@ -314,10 +359,10 @@ final class DtoGenerator
      * @param  array<string, mixed>  $schema
      * @return array{0: array<string, mixed>, 1: ?string}
      */
-    private function unwrap(array $schema): array
+    private function unwrap(array $schema, SpecModel $spec): array
     {
         if (isset($schema['$ref']) && is_string($schema['$ref'])) {
-            $resolved = $this->latest->resolve($schema['$ref']) ?? [];
+            $resolved = $spec->resolve($schema['$ref']) ?? [];
 
             return [$resolved, $this->refName($schema['$ref'])];
         }
@@ -337,7 +382,7 @@ final class DtoGenerator
                     continue;
                 }
 
-                return [$this->latest->resolve($member['$ref']) ?? [], $name];
+                return [$spec->resolve($member['$ref']) ?? [], $name];
             }
         }
 
@@ -383,28 +428,6 @@ final class DtoGenerator
         return $properties;
     }
 
-    /**
-     * The earliest supported release in which a schema property appears, or null when it exists in
-     * the earliest release (and therefore needs no @since annotation).
-     */
-    private function sinceFor(string $schemaName, string $field): ?string
-    {
-        foreach ($this->releaseOrder as $release) {
-            $schema = $this->specsByRelease[$release]->componentSchema($schemaName);
-            if ($schema === null) {
-                continue;
-            }
-
-            $present = array_key_exists($field, $this->mergedProperties($this->specsByRelease[$release], $schema));
-
-            if ($present) {
-                return $release === $this->releaseOrder[0] ? null : $release;
-            }
-        }
-
-        return null;
-    }
-
     private function refName(string $ref): string
     {
         $parts = explode('/', $ref);
@@ -437,7 +460,7 @@ final class DtoGenerator
     /**
      * @param  array{php: string, doc: ?string, cast: ?string, castImport: ?string, imports: list<string>}  $descriptor
      */
-    private function renderField(string $field, array $descriptor, ?string $since): string
+    private function renderField(string $field, array $descriptor, ?string $since, ?string $removedIn): string
     {
         $docLines = [];
         if ($descriptor['doc'] !== null) {
@@ -445,6 +468,9 @@ final class DtoGenerator
         }
         if ($since !== null) {
             $docLines[] = "@since ZGW {$since}";
+        }
+        if ($removedIn !== null) {
+            $docLines[] = "@deprecated Removed in ZGW {$removedIn}";
         }
 
         $out = '';
@@ -467,9 +493,11 @@ final class DtoGenerator
         sort($imports);
         $useBlock = implode("\n", array_map(static fn (string $i): string => "use {$i};", $imports));
 
+        $marker = " * @zgw-schema {$this->component}:{$schemaName}";
+
         $doc = $isRoot
-            ? "/**\n * Generated from the ZGW \"{$schemaName}\" schema (component: {$this->component}).\n *\n * Superset of the fields across releases ".implode(', ', $this->releaseOrder).". A field that does not exist in\n * the release a connection targets hydrates to null.\n */"
-            : "/**\n * Generated from the ZGW \"{$schemaName}\" schema (component: {$this->component}).\n */";
+            ? "/**\n * Generated from the ZGW \"{$schemaName}\" schema (component: {$this->component}).\n *\n * Superset of the fields across releases ".implode(', ', $this->releaseOrder).". A field that does not exist in\n * the release a connection targets hydrates to null.\n *\n{$marker}\n */"
+            : "/**\n * Generated from the ZGW \"{$schemaName}\" schema (component: {$this->component}).\n *\n{$marker}\n */";
 
         $body = implode("\n\n", $fields);
 
