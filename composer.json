@@ -1,7 +1,7 @@
 {
     "name": "woweb/laravel-zgw-client",
-    "description": "Laravel package for the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten and Besluiten.",
-    "keywords": ["laravel", "zgw", "openzaak", "zaken", "documenten", "catalogi", "besluiten", "woweb"],
+    "description": "Laravel package for the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten, Besluiten, Autorisaties and Notificaties.",
+    "keywords": ["laravel", "zgw", "openzaak", "zaken", "documenten", "catalogi", "besluiten", "autorisaties", "notificaties", "woweb"],
     "license": "EUPL-1.2",
     "type": "library",
     "authors": [
