@@ -9,6 +9,7 @@ namespace Woweb\Zgw\Data\Generated\Catalogi;
 use Carbon\CarbonImmutable;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
@@ -56,6 +57,9 @@ class CatalogusData extends Data
 
     public ?CarbonImmutable $begindatumVersie;
 
+    /** @since ZGW 1.6 */
+    public ?CatalogusEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -64,6 +68,7 @@ class CatalogusData extends Data
         return [
             'url' => new ReferenceCast,
             'begindatumVersie' => new DateTimeCast,
+            '_expand' => new DtoCast(CatalogusEmbedded::class),
         ];
     }
 }

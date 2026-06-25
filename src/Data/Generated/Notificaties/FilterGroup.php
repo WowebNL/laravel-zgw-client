@@ -15,7 +15,8 @@ use Woweb\Zgw\Data\Data;
  */
 class FilterGroup extends Data
 {
-    public ?string $filters;
+    /** @var array<string, mixed>|null Kept as a raw structure. */
+    public ?array $filters;
 
     public ?string $naam;
 }

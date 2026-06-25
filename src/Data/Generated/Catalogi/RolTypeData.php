@@ -9,6 +9,7 @@ namespace Woweb\Zgw\Data\Generated\Catalogi;
 use Carbon\CarbonImmutable;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
@@ -45,6 +46,9 @@ class RolTypeData extends Data
 
     public ?CarbonImmutable $eindeObject;
 
+    /** @since ZGW 1.6 */
+    public ?RolTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -59,6 +63,7 @@ class RolTypeData extends Data
             'eindeGeldigheid' => new DateTimeCast,
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
+            '_expand' => new DtoCast(RolTypeEmbedded::class),
         ];
     }
 }

@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Generated\Documenten;
 
 use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
@@ -31,6 +32,9 @@ class ObjectInformatieObjectData extends Data
 
     public ?ObjectType $objectType;
 
+    /** @since ZGW 1.6 */
+    public ?ObjectInformatieObjectEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -41,6 +45,7 @@ class ObjectInformatieObjectData extends Data
             'informatieobject' => new ReferenceCast,
             'object' => new ReferenceCast,
             'objectType' => new EnumCast(ObjectType::class),
+            '_expand' => new DtoCast(ObjectInformatieObjectEmbedded::class),
         ];
     }
 }

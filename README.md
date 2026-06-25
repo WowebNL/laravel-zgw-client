@@ -460,6 +460,15 @@ if ($rol->betrokkeneIdentificatie instanceof RolNatuurlijkPersoon) {
 }
 ```
 
+A resource fetched with `?expand=` carries a typed `_expand` DTO with the embedded related resources, resolved recursively and across components (an expanded zaak's `zaaktype` is a catalogi DTO, its `informatieobjecten` documenten DTOs). It is null when the response was not expanded, and a relation the generator cannot map to a DTO stays a raw array.
+
+```php
+$zaak = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->show($uuid, ['expand' => 'zaaktype,rollen']);
+
+$zaak->_expand?->zaaktype?->identificatie;     // catalogi ZaakTypeData, typed
+$zaak->_expand?->rollen[0]?->betrokkeneIdentificatie; // recursively typed
+```
+
 ## Events
 
 A `Woweb\Zgw\Events\ZgwRequestSent` event is dispatched after every request that receives a response. It carries the connection name, the `client_id`, the HTTP method, the request URI and the response status code. This is a seam for request-level audit logging (for example an ISO 27001 audit trail); with no listeners registered it costs nothing.

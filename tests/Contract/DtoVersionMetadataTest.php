@@ -112,6 +112,14 @@ class DtoVersionMetadataTest extends ContractTestCase
             $resolution = $spec->discriminatorResolution($schema);
             if ($resolution !== null && $resolution['field'] === $field) {
                 $present[] = $release;
+
+                continue;
+            }
+
+            // The _expand field is present in a release exactly when that release has the
+            // {Schema}Expanded variant.
+            if ($field === '_expand' && $spec->expandResolution($schema) !== null) {
+                $present[] = $release;
             }
         }
 

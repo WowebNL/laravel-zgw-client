@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Generated\Zaken;
 
 use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
@@ -33,6 +34,9 @@ class ZaakEigenschapData extends Data
 
     public ?string $waarde;
 
+    /** @since ZGW 1.6 */
+    public ?ZaakEigenschapEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -42,6 +46,7 @@ class ZaakEigenschapData extends Data
             'url' => new ReferenceCast,
             'zaak' => new ReferenceCast,
             'eigenschap' => new ReferenceCast,
+            '_expand' => new DtoCast(ZaakEigenschapEmbedded::class),
         ];
     }
 }

@@ -50,6 +50,9 @@ class EigenschapData extends Data
 
     public ?CarbonImmutable $eindeObject;
 
+    /** @since ZGW 1.6 */
+    public ?EigenschapEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -65,6 +68,7 @@ class EigenschapData extends Data
             'eindeGeldigheid' => new DateTimeCast,
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
+            '_expand' => new DtoCast(EigenschapEmbedded::class),
         ];
     }
 }

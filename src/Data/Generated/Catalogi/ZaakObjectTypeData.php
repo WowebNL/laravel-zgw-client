@@ -9,6 +9,7 @@ namespace Woweb\Zgw\Data\Generated\Catalogi;
 use Carbon\CarbonImmutable;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
@@ -54,6 +55,9 @@ class ZaakObjectTypeData extends Data
 
     public ?Reference $catalogus;
 
+    /** @since ZGW 1.6 */
+    public ?ZaakObjectTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -68,6 +72,7 @@ class ZaakObjectTypeData extends Data
             'objecttype' => new ReferenceCast,
             'zaaktype' => new ReferenceCast,
             'catalogus' => new ReferenceCast,
+            '_expand' => new DtoCast(ZaakObjectTypeEmbedded::class),
         ];
     }
 }

@@ -9,6 +9,7 @@ namespace Woweb\Zgw\Data\Generated\Zaken;
 use Carbon\CarbonImmutable;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
@@ -45,6 +46,8 @@ class ZaakInformatieObjectData extends Data
 
     public ?Reference $status;
 
+    public ?ZaakInformatieObjectEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -58,6 +61,7 @@ class ZaakInformatieObjectData extends Data
             'registratiedatum' => new DateTimeCast,
             'vernietigingsdatum' => new DateTimeCast,
             'status' => new ReferenceCast,
+            '_expand' => new DtoCast(ZaakInformatieObjectEmbedded::class),
         ];
     }
 }

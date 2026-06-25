@@ -81,6 +81,12 @@ class DtoCoverageTest extends ContractTestCase
             if ($resolution !== null) {
                 $fields[$resolution['field']] = true;
             }
+
+            // An expandable resource carries a synthetic _expand field, sourced from its
+            // {Schema}Expanded variant rather than the base properties.
+            if ($spec->expandResolution($schema) !== null) {
+                $fields['_expand'] = true;
+            }
         }
 
         return array_keys($fields);

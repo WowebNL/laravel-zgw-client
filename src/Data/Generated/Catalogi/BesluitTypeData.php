@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterval;
 use Woweb\Zgw\Data\Casts\Cast;
 use Woweb\Zgw\Data\Casts\DateTimeCast;
+use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\DurationCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
@@ -76,6 +77,9 @@ class BesluitTypeData extends Data
     /** @var list<string>|null */
     public ?array $vastgelegdIn;
 
+    /** @since ZGW 1.6 */
+    public ?BesluitTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -90,6 +94,7 @@ class BesluitTypeData extends Data
             'eindeGeldigheid' => new DateTimeCast,
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
+            '_expand' => new DtoCast(BesluitTypeEmbedded::class),
         ];
     }
 }

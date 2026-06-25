@@ -78,6 +78,9 @@ class ResultaatTypeData extends Data
     /** @var list<string>|null */
     public ?array $informatieobjecttypeOmschrijving;
 
+    /** @since ZGW 1.6 */
+    public ?ResultaatTypeEmbedded $_expand;
+
     /**
      * @return array<string, Cast>
      */
@@ -97,6 +100,7 @@ class ResultaatTypeData extends Data
             'beginObject' => new DateTimeCast,
             'eindeObject' => new DateTimeCast,
             'procestermijn' => new DurationCast,
+            '_expand' => new DtoCast(ResultaatTypeEmbedded::class),
         ];
     }
 }

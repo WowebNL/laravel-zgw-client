@@ -6,7 +6,11 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data\Generated\Zaken;
 
+use Woweb\Zgw\Data\Casts\Cast;
+use Woweb\Zgw\Data\Casts\DtoCast;
+use Woweb\Zgw\Data\Casts\DtoCollectionCast;
 use Woweb\Zgw\Data\Data;
+use Woweb\Zgw\Data\Generated\Catalogi\RolTypeData;
 
 /**
  * Generated from the ZGW "RolEmbedded" schema (component: zaken).
@@ -15,13 +19,25 @@ use Woweb\Zgw\Data\Data;
  */
 class RolEmbedded extends Data
 {
-    public ?string $zaak;
+    public ?ZaakData $zaak;
 
-    /** @since ZGW 1.6 */
-    public ?string $betrokkene;
+    /** @var array<string, mixed>|null Kept as a raw structure. @since ZGW 1.6 */
+    public ?array $betrokkene;
 
-    public ?string $roltype;
+    public ?RolTypeData $roltype;
 
-    /** @var list<string>|null */
+    /** @var list<StatusData>|null */
     public ?array $statussen;
+
+    /**
+     * @return array<string, Cast>
+     */
+    protected static function casts(): array
+    {
+        return [
+            'zaak' => new DtoCast(ZaakData::class),
+            'roltype' => new DtoCast(RolTypeData::class),
+            'statussen' => new DtoCollectionCast(StatusData::class),
+        ];
+    }
 }
