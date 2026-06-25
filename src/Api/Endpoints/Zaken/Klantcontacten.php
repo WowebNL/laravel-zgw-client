@@ -7,11 +7,11 @@ namespace Woweb\Zgw\Api\Endpoints\Zaken;
 use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 #[ZgwResource(schema: 'KlantContact', component: 'zaken')]
 class Klantcontacten extends AbstractEndpoint implements CreatesResource, ListsResources, ShowsResource

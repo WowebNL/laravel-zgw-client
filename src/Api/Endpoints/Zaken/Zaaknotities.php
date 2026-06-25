@@ -10,6 +10,7 @@ use Woweb\Zgw\Api\Actions\Patch;
 use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
@@ -17,7 +18,6 @@ use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // Zaaknotities were introduced in ZGW 1.7; the per-version guard rejects them on older connections.
 #[ZgwResource(schema: 'ZaakNotitie', component: 'zaken')]

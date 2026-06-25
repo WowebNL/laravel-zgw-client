@@ -1,0 +1,20 @@
+parameters:
+  paths:
+    - ./src
+  layers:
+    - name: Api
+      collectors:
+        - type: directory
+          value: src/Api/.*
+    - name: Data
+      collectors:
+        - type: directory
+          value: src/Data/.*
+  ruleset:
+    # The array kernel (Api) must never depend on the optional typed layer (Data): the typed layer
+    # is built on top of the kernel, so the dependency may only point the other way. Api is allowed
+    # to depend on nothing among the declared layers; everything outside Api and Data is uncovered
+    # and ignored.
+    Api: ~
+    Data:
+      - Api

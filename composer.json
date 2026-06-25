@@ -17,6 +17,7 @@
         "illuminate/support": "^12.0|^13.0"
     },
     "require-dev": {
+        "deptrac/deptrac": "^3.0",
         "larastan/larastan": "^2.0|^3.0",
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^10.0|^11.0",
@@ -59,8 +60,9 @@
         ],
         "dto:generate": [
             "@php scripts/generate-dtos.php",
-            "@php vendor/bin/pint src/Data/Generated --quiet"
-        ]
+            "@php vendor/bin/pint src/Data/Generated src/Data/Writes --quiet"
+        ],
+        "deptrac": "@php vendor/bin/deptrac analyse --no-progress"
     },
     "config": {
         "optimize-autoloader": true,

@@ -436,10 +436,10 @@ $zaken = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->index();
 Typed::wrap(Zgw::connection('main')->zaken()->zaken())->endpoint()->index();
 ```
 
-Hydration is tolerant: a missing field becomes null, an unknown field is kept in `$extra` (so a value added by a newer ZGW release is never dropped before the DTOs are regenerated), and the untouched response is kept in `$raw`. Writes use a separate builder whose payload contains only the fields you set, so a PATCH never clears a field by accident; set a field to null to clear it deliberately.
+Hydration is tolerant: a missing field becomes null, an unknown field is kept in `$extra` (so a value added by a newer ZGW release is never dropped before the DTOs are regenerated), and the untouched response is kept in `$raw`. Writes use a separate builder whose payload contains only the fields you set, so a PATCH never clears a field by accident; set a field to null to clear it deliberately. Every write-capable resource has a generated builder with a typed setter per writable field.
 
 ```php
-use Woweb\Zgw\Data\Writes\ZaakWrite;
+use Woweb\Zgw\Data\Writes\Zaken\ZaakWrite;
 
 $payload = (new ZaakWrite)
     ->toelichting('Bijgewerkt na controle')

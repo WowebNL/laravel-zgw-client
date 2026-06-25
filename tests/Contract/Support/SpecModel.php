@@ -222,6 +222,46 @@ final class SpecModel
     }
 
     /**
+     * The writable property names of a schema: those not marked readOnly, resolving in-file $refs
+     * and merging allOf members. These are the fields a create or update payload may carry.
+     *
+     * @param  array<string, mixed>  $schema
+     * @return list<string>
+     */
+    public function writablePropertyNames(array $schema, int $depth = 0): array
+    {
+        if ($depth > 12) {
+            return [];
+        }
+
+        if (isset($schema['$ref'])) {
+            $resolved = $this->resolveInternalRef((string) $schema['$ref']);
+
+            return is_array($resolved) ? $this->writablePropertyNames($resolved, $depth + 1) : [];
+        }
+
+        $properties = [];
+
+        if (isset($schema['properties']) && is_array($schema['properties'])) {
+            foreach ($schema['properties'] as $name => $sub) {
+                if (is_array($sub) && ($sub['readOnly'] ?? false) !== true) {
+                    $properties[] = (string) $name;
+                }
+            }
+        }
+
+        if (isset($schema['allOf']) && is_array($schema['allOf'])) {
+            foreach ($schema['allOf'] as $member) {
+                if (is_array($member)) {
+                    $properties = array_merge($properties, $this->writablePropertyNames($member, $depth + 1));
+                }
+            }
+        }
+
+        return array_values(array_unique($properties));
+    }
+
+    /**
      * The raw component schemas map (components.schemas), unresolved.
      *
      * @return array<string, mixed>

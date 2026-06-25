@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Woweb\Zgw\Data\Attributes;
+namespace Woweb\Zgw\Api\Attributes;
 
 use Attribute;
 

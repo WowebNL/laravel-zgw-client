@@ -10,6 +10,7 @@ use Woweb\Zgw\Api\Actions\Patch;
 use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Connection\ZgwConnection;
 use Woweb\Zgw\Contracts\CreatesResource;
@@ -18,7 +19,6 @@ use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 #[ZgwResource(schema: 'ZaakEigenschap', component: 'zaken')]
 class Zaakeigenschappen extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ReplacesResource, ShowsResource

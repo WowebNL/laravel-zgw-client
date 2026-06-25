@@ -8,13 +8,13 @@ use Woweb\Zgw\Api\Actions\Delete;
 use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Connection\ZgwConnection;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // The besluiten linked to a specific zaak. A relation resource: create, read and delete.
 #[ZgwResource(schema: 'ZaakBesluit', component: 'zaken')]

@@ -12,6 +12,7 @@ use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Search;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
@@ -21,7 +22,6 @@ use Woweb\Zgw\Contracts\ProvidesAuditTrail;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\SearchesResources;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 use Woweb\Zgw\Exceptions\ApiRequestException;
 
 #[ZgwResource(schema: 'EnkelvoudigInformatieObject', component: 'documenten')]

@@ -101,3 +101,24 @@ jobs:
 
       - name: Pint
         run: vendor/bin/pint --test
+
+  deptrac:
+    name: deptrac
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer config --no-plugins policy.advisories.block false || true
+          composer update --prefer-dist --no-interaction
+
+      - name: Deptrac
+        run: vendor/bin/deptrac analyse --no-progress
