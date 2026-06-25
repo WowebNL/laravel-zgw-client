@@ -12,12 +12,14 @@ use Woweb\Zgw\Data\Casts\DateTimeCast;
 use Woweb\Zgw\Data\Casts\DtoCast;
 use Woweb\Zgw\Data\Casts\DtoCollectionCast;
 use Woweb\Zgw\Data\Casts\EnumCast;
+use Woweb\Zgw\Data\Casts\GeoJsonCast;
 use Woweb\Zgw\Data\Casts\ReferenceCast;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Generated\Enums\Archiefnominatie;
 use Woweb\Zgw\Data\Generated\Enums\Archiefstatus;
 use Woweb\Zgw\Data\Generated\Enums\Betalingsindicatie;
 use Woweb\Zgw\Data\Generated\Enums\Vertrouwelijkheidaanduiding;
+use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Data\Values\Reference;
 
 /**
@@ -69,8 +71,7 @@ class ZaakData extends Data
 
     public ?CarbonImmutable $laatsteBetaaldatum;
 
-    /** @var array<string, mixed>|null Kept as a raw structure. */
-    public ?array $zaakgeometrie;
+    public ?GeoJsonGeometry $zaakgeometrie;
 
     public ?Verlenging $verlenging;
 
@@ -138,6 +139,7 @@ class ZaakData extends Data
             'vertrouwelijkheidaanduiding' => new EnumCast(Vertrouwelijkheidaanduiding::class),
             'betalingsindicatie' => new EnumCast(Betalingsindicatie::class),
             'laatsteBetaaldatum' => new DateTimeCast,
+            'zaakgeometrie' => new GeoJsonCast,
             'verlenging' => new DtoCast(Verlenging::class),
             'opschorting' => new DtoCast(Opschorting::class),
             'selectielijstklasse' => new ReferenceCast,

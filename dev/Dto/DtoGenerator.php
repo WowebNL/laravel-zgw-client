@@ -51,6 +51,9 @@ final class DtoGenerator
      * @param  string  $namespace  Base namespace for generated objects (for example Woweb\Zgw\Data\Generated).
      * @param  string  $outDir  Directory the objects are written to.
      * @param  list<string>  $opaque  Object schema names kept as raw arrays rather than generated DTOs.
+     * @param  array<string, array{type: class-string, cast: class-string}>  $valueObjects  Schema
+     *                                                                                      names mapped to a hand-written value object and its cast (for stable, standardised
+     *                                                                                      structures such as GeoJSON that are modelled as value objects, not generated DTOs).
      */
     public function __construct(
         private readonly string $component,
@@ -58,6 +61,7 @@ final class DtoGenerator
         private readonly string $namespace,
         private readonly string $outDir,
         private readonly array $opaque = [],
+        private readonly array $valueObjects = [],
     ) {}
 
     /**
@@ -168,9 +172,24 @@ final class DtoGenerator
     {
         [$resolved, $refName] = $this->unwrap($propSchema);
 
-        // Opaque reference: a schema we deliberately keep as a raw structure (for example a
-        // polymorphic GeoJSON geometry). Handled first because such schemas need not have a flat
-        // "properties" map.
+        // Value object reference: a stable, standardised structure modelled as a hand-written value
+        // object (for example GeoJSON). Handled first because such schemas are polymorphic and need
+        // not have a flat "properties" map.
+        if ($refName !== null && isset($this->valueObjects[$refName])) {
+            $type = $this->valueObjects[$refName]['type'];
+            $cast = $this->valueObjects[$refName]['cast'];
+
+            return [
+                'php' => '?'.$this->shortName($type),
+                'doc' => null,
+                'cast' => 'new '.$this->shortName($cast),
+                'castImport' => $cast,
+                'imports' => [$cast, $type],
+            ];
+        }
+
+        // Opaque reference: a schema we deliberately keep as a raw structure. Handled before the
+        // object branch because such schemas need not have a flat "properties" map.
         if ($refName !== null && in_array($refName, $this->opaque, true)) {
             return [
                 'php' => '?array',
@@ -389,6 +408,13 @@ final class DtoGenerator
     private function refName(string $ref): string
     {
         $parts = explode('/', $ref);
+
+        return (string) end($parts);
+    }
+
+    private function shortName(string $fqcn): string
+    {
+        $parts = explode('\\', $fqcn);
 
         return (string) end($parts);
     }

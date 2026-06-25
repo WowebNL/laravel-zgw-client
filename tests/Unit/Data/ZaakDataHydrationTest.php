@@ -13,6 +13,7 @@ use Woweb\Zgw\Data\Generated\Enums\Vertrouwelijkheidaanduiding;
 use Woweb\Zgw\Data\Generated\RelevanteZaak;
 use Woweb\Zgw\Data\Generated\Verlenging;
 use Woweb\Zgw\Data\Generated\ZaakData;
+use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Data\Values\Reference;
 
 class ZaakDataHydrationTest extends TestCase
@@ -45,7 +46,17 @@ class ZaakDataHydrationTest extends TestCase
                 'https://zaken.example.com/zaken/api/v1/rollen/r1',
             ],
             'archiefnominatie' => 'vernietigen',
+            'zaakgeometrie' => ['type' => 'Point', 'coordinates' => [4.9, 52.37]],
         ], $overrides);
+    }
+
+    public function test_hydrates_geojson_geometry_as_a_value_object(): void
+    {
+        $zaak = ZaakData::from($this->payload());
+
+        $this->assertInstanceOf(GeoJsonGeometry::class, $zaak->zaakgeometrie);
+        $this->assertSame('Point', $zaak->zaakgeometrie->type());
+        $this->assertSame([4.9, 52.37], $zaak->zaakgeometrie->coordinates());
     }
 
     public function test_hydrates_scalars_references_and_dates(): void

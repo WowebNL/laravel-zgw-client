@@ -15,12 +15,25 @@ require __DIR__.'/../vendor/autoload.php';
 use Woweb\Zgw\Dev\Dto\DtoGenerator;
 use Woweb\Zgw\Dev\Dto\TypedMapGenerator;
 
+/**
+ * Schema names mapped to a hand-written value object: stable, standardised structures (GeoJSON)
+ * modelled as value objects rather than generated, spec-driven DTOs.
+ *
+ * @var array<string, array{type: class-string, cast: class-string}> $valueObjects
+ */
+$valueObjects = [
+    'GeoJSONGeometry' => [
+        'type' => \Woweb\Zgw\Data\Values\GeoJsonGeometry::class,
+        'cast' => \Woweb\Zgw\Data\Casts\GeoJsonCast::class,
+    ],
+];
+
 /** @var list<array{component: string, schema: string, opaque: list<string>}> $resources */
 $resources = [
     [
         'component' => 'zaken',
         'schema' => 'Zaak',
-        'opaque' => ['GeoJSONGeometry', 'Processobject'],
+        'opaque' => ['Processobject'],
     ],
 ];
 
@@ -34,6 +47,7 @@ foreach ($resources as $resource) {
         namespace: 'Woweb\\Zgw\\Data\\Generated',
         outDir: $root.'/src/Data/Generated',
         opaque: $resource['opaque'],
+        valueObjects: $valueObjects,
     );
 
     $paths = $generator->generate();
