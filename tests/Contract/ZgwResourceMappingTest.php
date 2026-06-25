@@ -8,6 +8,8 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use SplFileInfo;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\ShowsResource;
 use Woweb\Zgw\Data\Attributes\ZgwResource;
 use Woweb\Zgw\Data\Generated\TypedMap;
 use Woweb\Zgw\Tests\Contract\Support\ReleaseMatrix;
@@ -52,6 +54,25 @@ class ZgwResourceMappingTest extends ContractTestCase
         }
     }
 
+    public function test_every_read_capable_endpoint_is_annotated(): void
+    {
+        $annotated = $this->annotatedEndpoints();
+
+        foreach ($this->endpointClasses() as $class) {
+            $readable = is_subclass_of($class, ListsResources::class) || is_subclass_of($class, ShowsResource::class);
+
+            if (! $readable) {
+                continue;
+            }
+
+            $this->assertArrayHasKey(
+                $class,
+                $annotated,
+                "Endpoint [{$class}] can list or show resources but has no #[ZgwResource] attribute, so it has no typed DTO."
+            );
+        }
+    }
+
     private function assertSchemaExists(string $component, string $schema, string $endpoint): void
     {
         foreach (array_keys(ReleaseMatrix::releases()) as $release) {
@@ -66,7 +87,23 @@ class ZgwResourceMappingTest extends ContractTestCase
             }
         }
 
-        $this->fail("Schema [{$schema}] declared by [{$endpoint}] was not found in any fetched {$component} spec.");
+        // A resource can be release-specific (for example ZaakNotitie is ZGW 1.7+), so when only
+        // some releases are fetched its schema may legitimately be absent here. Only fail when all
+        // releases are present (the all-releases contract job); otherwise defer to that job.
+        if ($this->hasAllReleases($component)) {
+            $this->fail("Schema [{$schema}] declared by [{$endpoint}] was not found in any {$component} spec.");
+        }
+    }
+
+    private function hasAllReleases(string $component): bool
+    {
+        foreach (array_keys(ReleaseMatrix::releases()) as $release) {
+            if (ReleaseMatrix::specFile($release, $component) === null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -74,9 +111,27 @@ class ZgwResourceMappingTest extends ContractTestCase
      */
     private function annotatedEndpoints(): array
     {
+        $found = [];
+
+        foreach ($this->endpointClasses() as $class) {
+            $attributes = (new ReflectionClass($class))->getAttributes(ZgwResource::class);
+
+            if ($attributes !== []) {
+                $found[$class] = $attributes[0]->newInstance();
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * @return list<class-string>
+     */
+    private function endpointClasses(): array
+    {
         $dir = dirname(__DIR__, 2).'/src/Api/Endpoints';
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
-        $found = [];
+        $classes = [];
 
         foreach ($iterator as $file) {
             if (! $file instanceof SplFileInfo || $file->getExtension() !== 'php') {
@@ -86,18 +141,12 @@ class ZgwResourceMappingTest extends ContractTestCase
             $relative = substr($file->getPathname(), strlen($dir) + 1, -4);
             $class = 'Woweb\\Zgw\\Api\\Endpoints\\'.str_replace('/', '\\', $relative);
 
-            if (! class_exists($class)) {
-                continue;
-            }
-
-            $attributes = (new ReflectionClass($class))->getAttributes(ZgwResource::class);
-
-            if ($attributes !== []) {
+            if (class_exists($class)) {
                 /** @var class-string $class */
-                $found[$class] = $attributes[0]->newInstance();
+                $classes[] = $class;
             }
         }
 
-        return $found;
+        return $classes;
     }
 }

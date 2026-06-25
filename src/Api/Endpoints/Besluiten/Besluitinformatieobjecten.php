@@ -13,9 +13,11 @@ use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // A besluit-informatieobject is a relation: the ZGW Besluiten API supports create, read and
 // delete, but not update.
+#[ZgwResource(schema: 'BesluitInformatieObject', component: 'besluiten')]
 class Besluitinformatieobjecten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, ShowsResource
 {
     use Delete;

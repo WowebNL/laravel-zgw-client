@@ -6,8 +6,69 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data\Generated;
 
+use Woweb\Zgw\Api\Endpoints\Autorisaties\Applicaties;
+use Woweb\Zgw\Api\Endpoints\Besluiten\Besluiten;
+use Woweb\Zgw\Api\Endpoints\Besluiten\Besluitinformatieobjecten;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Besluittypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Catalogussen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Eigenschappen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Informatieobjecttypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Resultaattypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Roltypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Statustypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Zaakobjecttypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\ZaaktypeInformatieobjecttypen;
+use Woweb\Zgw\Api\Endpoints\Catalogi\Zaaktypen;
+use Woweb\Zgw\Api\Endpoints\Documenten\Enkelvoudiginformatieobjecten;
+use Woweb\Zgw\Api\Endpoints\Documenten\Gebruiksrechten;
+use Woweb\Zgw\Api\Endpoints\Documenten\Objectinformatieobjecten;
+use Woweb\Zgw\Api\Endpoints\Documenten\Verzendingen;
+use Woweb\Zgw\Api\Endpoints\Notificaties\Abonnementen;
+use Woweb\Zgw\Api\Endpoints\Notificaties\Kanalen;
+use Woweb\Zgw\Api\Endpoints\Zaken\Klantcontacten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Nested\ZaakBesluiten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Nested\Zaakeigenschappen;
+use Woweb\Zgw\Api\Endpoints\Zaken\Resultaten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Rollen;
+use Woweb\Zgw\Api\Endpoints\Zaken\Statussen;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaakcontactmomenten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaakinformatieobjecten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaaknotities;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaakobjecten;
+use Woweb\Zgw\Api\Endpoints\Zaken\Zaakverzoeken;
 use Woweb\Zgw\Api\Endpoints\Zaken\Zaken;
 use Woweb\Zgw\Data\Data;
+use Woweb\Zgw\Data\Generated\Autorisaties\ApplicatieData;
+use Woweb\Zgw\Data\Generated\Besluiten\BesluitData;
+use Woweb\Zgw\Data\Generated\Besluiten\BesluitInformatieObjectData;
+use Woweb\Zgw\Data\Generated\Catalogi\BesluitTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\CatalogusData;
+use Woweb\Zgw\Data\Generated\Catalogi\EigenschapData;
+use Woweb\Zgw\Data\Generated\Catalogi\InformatieObjectTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\ResultaatTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\RolTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\StatusTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\ZaakObjectTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\ZaakTypeData;
+use Woweb\Zgw\Data\Generated\Catalogi\ZaakTypeInformatieObjectTypeData;
+use Woweb\Zgw\Data\Generated\Documenten\EnkelvoudigInformatieObjectData;
+use Woweb\Zgw\Data\Generated\Documenten\GebruiksrechtenData;
+use Woweb\Zgw\Data\Generated\Documenten\ObjectInformatieObjectData;
+use Woweb\Zgw\Data\Generated\Documenten\VerzendingData;
+use Woweb\Zgw\Data\Generated\Notificaties\AbonnementData;
+use Woweb\Zgw\Data\Generated\Notificaties\KanaalData;
+use Woweb\Zgw\Data\Generated\Zaken\KlantContactData;
+use Woweb\Zgw\Data\Generated\Zaken\ResultaatData;
+use Woweb\Zgw\Data\Generated\Zaken\RolData;
+use Woweb\Zgw\Data\Generated\Zaken\StatusData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakBesluitData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakContactMomentData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakEigenschapData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakInformatieObjectData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakNotitieData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakObjectData;
+use Woweb\Zgw\Data\Generated\Zaken\ZaakVerzoekData;
 
 /**
  * Maps a kernel endpoint class to the DTO that hydrates its responses.
@@ -18,6 +79,36 @@ final class TypedMap
      * @var array<class-string, class-string<Data>>
      */
     public const MAP = [
+        Applicaties::class => ApplicatieData::class,
+        Besluiten::class => BesluitData::class,
+        Besluitinformatieobjecten::class => BesluitInformatieObjectData::class,
+        Besluittypen::class => BesluitTypeData::class,
+        Catalogussen::class => CatalogusData::class,
+        Eigenschappen::class => EigenschapData::class,
+        Informatieobjecttypen::class => InformatieObjectTypeData::class,
+        Resultaattypen::class => ResultaatTypeData::class,
+        Roltypen::class => RolTypeData::class,
+        Statustypen::class => StatusTypeData::class,
+        Zaakobjecttypen::class => ZaakObjectTypeData::class,
+        ZaaktypeInformatieobjecttypen::class => ZaakTypeInformatieObjectTypeData::class,
+        Zaaktypen::class => ZaakTypeData::class,
+        Enkelvoudiginformatieobjecten::class => EnkelvoudigInformatieObjectData::class,
+        Gebruiksrechten::class => GebruiksrechtenData::class,
+        Objectinformatieobjecten::class => ObjectInformatieObjectData::class,
+        Verzendingen::class => VerzendingData::class,
+        Abonnementen::class => AbonnementData::class,
+        Kanalen::class => KanaalData::class,
+        Klantcontacten::class => KlantContactData::class,
+        ZaakBesluiten::class => ZaakBesluitData::class,
+        Zaakeigenschappen::class => ZaakEigenschapData::class,
+        Resultaten::class => ResultaatData::class,
+        Rollen::class => RolData::class,
+        Statussen::class => StatusData::class,
+        Zaakcontactmomenten::class => ZaakContactMomentData::class,
+        Zaakinformatieobjecten::class => ZaakInformatieObjectData::class,
+        Zaaknotities::class => ZaakNotitieData::class,
+        Zaakobjecten::class => ZaakObjectData::class,
+        Zaakverzoeken::class => ZaakVerzoekData::class,
         Zaken::class => ZaakData::class,
     ];
 }

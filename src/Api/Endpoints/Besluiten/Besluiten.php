@@ -19,7 +19,9 @@ use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\ProvidesAuditTrail;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
+#[ZgwResource(schema: 'Besluit', component: 'besluiten')]
 class Besluiten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ProvidesAuditTrail, ReplacesResource, ShowsResource
 {
     use Audittrail;

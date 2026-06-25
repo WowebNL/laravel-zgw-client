@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Writes;
 
 use DateTimeInterface;
-use Woweb\Zgw\Data\Generated\Enums\Vertrouwelijkheidaanduiding;
+use Woweb\Zgw\Data\Generated\Zaken\Enums\Vertrouwelijkheidaanduiding;
 use Woweb\Zgw\Data\Values\Reference;
 
 /**

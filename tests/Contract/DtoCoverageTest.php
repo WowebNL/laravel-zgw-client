@@ -4,49 +4,50 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Tests\Contract;
 
-use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionClass;
 use ReflectionProperty;
-use Woweb\Zgw\Data\Data;
-use Woweb\Zgw\Data\Generated\ZaakData;
+use Woweb\Zgw\Tests\Contract\Support\GeneratedDtos;
 use Woweb\Zgw\Tests\Contract\Support\ReleaseMatrix;
 
 /**
- * Guards that each generated DTO stays in step with the specs: every field the specs define has a
- * home on the DTO, and the DTO carries no field the specs no longer define. When the specs change
- * and the DTOs are not regenerated, this turns into a red test with the exact field names.
+ * Guards that each generated DTO stays in step with the specs: every field the specs define (across
+ * the releases present) has a home on the DTO, and the DTO carries no field the specs no longer
+ * define. When the specs change and the DTOs are not regenerated, this turns into a red test with
+ * the exact field names.
  */
 class DtoCoverageTest extends ContractTestCase
 {
-    /**
-     * @param  class-string<Data>  $dtoClass
-     */
-    #[DataProvider('resources')]
-    public function test_dto_matches_the_spec_schema(string $component, string $schema, string $dtoClass): void
+    public function test_every_generated_dto_matches_its_spec_schema(): void
     {
-        $specFields = $this->unionOfSpecFields($component, $schema);
+        $checked = 0;
 
-        if ($specFields === []) {
-            $this->markTestSkipped("Schema [{$schema}] is not present in any fetched {$component} spec.");
+        foreach (GeneratedDtos::all() as $dtoClass => $source) {
+            $specFields = $this->unionOfSpecFields($source['component'], $source['schema']);
+
+            if ($specFields === []) {
+                continue; // This component's specs are not present in this job.
+            }
+
+            $declared = $this->declaredFields($dtoClass);
+
+            // Every field the fetched specs define must have a DTO property. This holds per release.
+            $missing = array_values(array_diff($specFields, $declared));
+            $this->assertSame([], $missing, "These {$source['schema']} spec fields have no property on {$dtoClass}: ".implode(', ', $missing));
+
+            // The reverse (no DTO property without a spec field) is only valid against the full
+            // cross-release union: a field added in a later release would look orphaned in a job
+            // that only fetched an earlier release. So only assert it when all releases are present.
+            if ($this->hasAllReleases($source['component'])) {
+                $orphan = array_values(array_diff($declared, $specFields));
+                $this->assertSame([], $orphan, "These {$dtoClass} properties are not in any {$source['schema']} spec: ".implode(', ', $orphan));
+            }
+
+            $checked++;
         }
 
-        $declared = $this->declaredFields($dtoClass);
-
-        $missing = array_values(array_diff($specFields, $declared));
-        $orphan = array_values(array_diff($declared, $specFields));
-
-        $this->assertSame([], $missing, "These {$schema} spec fields have no DTO property: ".implode(', ', $missing));
-        $this->assertSame([], $orphan, "These {$dtoClass} properties are not in any {$schema} spec: ".implode(', ', $orphan));
-    }
-
-    /**
-     * @return array<string, array{0: string, 1: string, 2: class-string<Data>}>
-     */
-    public static function resources(): array
-    {
-        return [
-            'Zaak' => ['zaken', 'Zaak', ZaakData::class],
-        ];
+        if ($checked === 0) {
+            $this->markTestSkipped('No generated DTO could be checked (no matching specs fetched).');
+        }
     }
 
     /**
@@ -79,7 +80,22 @@ class DtoCoverageTest extends ContractTestCase
     }
 
     /**
-     * @param  class-string<Data>  $dtoClass
+     * Whether every declared release has this component's spec fetched, so the cross-release union
+     * of fields is complete (and the orphan check is meaningful).
+     */
+    private function hasAllReleases(string $component): bool
+    {
+        foreach (array_keys(ReleaseMatrix::releases()) as $release) {
+            if (ReleaseMatrix::specFile($release, $component) === null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  class-string  $dtoClass
      * @return list<string>
      */
     private function declaredFields(string $dtoClass): array

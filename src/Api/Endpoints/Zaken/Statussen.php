@@ -11,8 +11,10 @@ use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 // A status is append-only in the ZGW Zaken API: it supports create and read, but not delete.
+#[ZgwResource(schema: 'Status', component: 'zaken')]
 class Statussen extends AbstractEndpoint implements CreatesResource, ListsResources, ShowsResource
 {
     use Index;

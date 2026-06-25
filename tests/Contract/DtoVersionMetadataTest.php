@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Tests\Contract;
 
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use ReflectionClass;
 use ReflectionProperty;
-use SplFileInfo;
-use Woweb\Zgw\Data\Data;
+use Woweb\Zgw\Tests\Contract\Support\GeneratedDtos;
 use Woweb\Zgw\Tests\Contract\Support\ReleaseMatrix;
 
 /**
@@ -29,14 +25,8 @@ class DtoVersionMetadataTest extends ContractTestCase
     {
         $checked = 0;
 
-        foreach ($this->generatedDtos() as $class) {
-            [$component, $schema] = $this->schemaOf($class);
-
-            if ($component === null || $schema === null) {
-                continue;
-            }
-
-            $releases = $this->releasesWithComponent($component);
+        foreach (GeneratedDtos::all() as $class => $source) {
+            $releases = $this->releasesWithComponent($source['component']);
 
             if (count($releases) < 2) {
                 continue;
@@ -49,7 +39,7 @@ class DtoVersionMetadataTest extends ContractTestCase
                     continue;
                 }
 
-                $present = $this->releasesContaining($component, $schema, $field, $releases);
+                $present = $this->releasesContaining($source['component'], $source['schema'], $field, $releases);
 
                 if ($present === []) {
                     continue; // Coverage is the job of DtoCoverageTest.
@@ -76,47 +66,6 @@ class DtoVersionMetadataTest extends ContractTestCase
             // metadata needs at least two releases of a component present (the all-releases job).
             $this->markTestSkipped('Need at least two releases of a component present to verify version metadata.');
         }
-    }
-
-    /**
-     * @return list<class-string>
-     */
-    private function generatedDtos(): array
-    {
-        $dir = dirname(__DIR__, 2).'/src/Data/Generated';
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)
-        );
-        $classes = [];
-
-        foreach ($iterator as $file) {
-            if (! $file instanceof SplFileInfo || $file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $relative = substr($file->getPathname(), strlen($dir) + 1, -4);
-            $class = 'Woweb\\Zgw\\Data\\Generated\\'.str_replace('/', '\\', $relative);
-
-            if (class_exists($class) && is_subclass_of($class, Data::class)) {
-                $classes[] = $class;
-            }
-        }
-
-        return $classes;
-    }
-
-    /**
-     * @return array{0: ?string, 1: ?string} component and schema name from the class @zgw-schema marker.
-     */
-    private function schemaOf(string $class): array
-    {
-        $doc = (new ReflectionClass($class))->getDocComment();
-
-        if ($doc !== false && preg_match('/@zgw-schema\s+(\w+):(\w+)/', $doc, $m) === 1) {
-            return [$m[1], $m[2]];
-        }
-
-        return [null, null];
     }
 
     /**

@@ -21,8 +21,10 @@ use Woweb\Zgw\Contracts\ProvidesAuditTrail;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\SearchesResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 use Woweb\Zgw\Exceptions\ApiRequestException;
 
+#[ZgwResource(schema: 'EnkelvoudigInformatieObject', component: 'documenten')]
 class Enkelvoudiginformatieobjecten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ProvidesAuditTrail, ReplacesResource, SearchesResources, ShowsResource
 {
     use Audittrail;

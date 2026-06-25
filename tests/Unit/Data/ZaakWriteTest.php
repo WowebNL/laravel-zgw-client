@@ -6,7 +6,7 @@ namespace Woweb\Zgw\Tests\Unit\Data;
 
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\TestCase;
-use Woweb\Zgw\Data\Generated\Enums\Vertrouwelijkheidaanduiding;
+use Woweb\Zgw\Data\Generated\Zaken\Enums\Vertrouwelijkheidaanduiding;
 use Woweb\Zgw\Data\Values\Reference;
 use Woweb\Zgw\Data\Writes\ZaakWrite;
 

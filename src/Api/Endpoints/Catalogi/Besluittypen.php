@@ -19,7 +19,9 @@ use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\PublishesResource;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Attributes\ZgwResource;
 
+#[ZgwResource(schema: 'BesluitType', component: 'catalogi')]
 class Besluittypen extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, PublishesResource, ReplacesResource, ShowsResource
 {
     use Delete;
