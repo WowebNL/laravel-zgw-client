@@ -8,9 +8,12 @@ use Woweb\Zgw\Api\Actions\Index;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\ShowsResource;
 
 // A status is append-only in the ZGW Zaken API: it supports create and read, but not delete.
-class Statussen extends AbstractEndpoint
+class Statussen extends AbstractEndpoint implements CreatesResource, ListsResources, ShowsResource
 {
     use Index;
     use Show;

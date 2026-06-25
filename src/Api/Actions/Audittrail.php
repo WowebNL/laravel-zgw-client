@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Api\Actions;
 
 use Illuminate\Support\Collection;
+use Woweb\Zgw\Contracts\ProvidesAuditTrail;
 
+/**
+ * @phpstan-require-implements ProvidesAuditTrail
+ */
 trait Audittrail
 {
     /**

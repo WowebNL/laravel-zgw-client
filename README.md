@@ -74,6 +74,9 @@ Every key below lives inside a connection (the `main` connection by default). Al
 | `connect_timeout` | `ZGW_CONNECT_TIMEOUT` | `10` | TCP/TLS handshake timeout in seconds. |
 | `timeout` | `ZGW_TIMEOUT` | `30` | Total request timeout in seconds. |
 | `max_pages` | `ZGW_MAX_PAGES` | `1000` | Maximum pages followed during auto-pagination. |
+| `retry_times` | `ZGW_RETRY_TIMES` | `0` | Extra attempts after the first on a transient failure. `0` disables retries. |
+| `retry_sleep_ms` | `ZGW_RETRY_SLEEP_MS` | `100` | Base backoff in milliseconds between attempts. |
+| `retry_max_sleep_ms` | `ZGW_RETRY_MAX_SLEEP_MS` | `5000` | Cap on the backoff, and on any `Retry-After` wait. |
 
 The top-level `default` key (`ZGW_CONNECTION`, default `main`) selects which connection is used when you call `connection()` without a name.
 
@@ -350,6 +353,10 @@ When `index()` follows a `next` link, or when you call `DirectEndpoint::getByUrl
 
 Every request carries `connect_timeout` (default 10 seconds) and `timeout` (default 30 seconds), so a slow or unresponsive provider cannot hang your application workers indefinitely. Tune them per connection.
 
+### Retries
+
+Retries are opt-in and off by default, so behaviour is unchanged unless you set `retry_times`. When enabled, only idempotent requests (`GET`, `HEAD`, `PUT`, `DELETE`) are retried, and only on a connection error, an HTTP 429, or a 5xx response. Create and update calls (`POST`, `PATCH`) are never retried automatically, so a half-applied write is never repeated against the registry. The wait between attempts honours a `Retry-After` header when the provider sends one, otherwise it backs off exponentially from `retry_sleep_ms`, capped at `retry_max_sleep_ms`. The final failure still surfaces through the normal exception handling described below.
+
 ### Pagination limit
 
 Auto-pagination follows at most `max_pages` pages (default 1000). If a provider returns an unbounded chain of `next` links, the package stops and throws `PaginationLimitException` instead of looping forever. Raise `max_pages` for genuinely large result sets, or narrow the query with filters passed to `index()`.
@@ -408,6 +415,26 @@ All exceptions extend `Woweb\Zgw\Exceptions\ZgwException`, so you can catch the 
 | `DisallowedHostException` | A `next` link or direct URL targets an origin that is not on the allowlist. |
 | `PaginationLimitException` | Auto-pagination exceeded `max_pages`. |
 | `InvalidIdentifierException` | A resource identifier contained characters that are not allowed in a URL segment. |
+
+## Events
+
+A `Woweb\Zgw\Events\ZgwRequestSent` event is dispatched after every request that receives a response. It carries the connection name, the `client_id`, the HTTP method, the request URI and the response status code. This is a seam for request-level audit logging (for example an ISO 27001 audit trail); with no listeners registered it costs nothing.
+
+When retries are enabled the event fires once per attempt. Connection-level failures (no response received) do not emit it.
+
+```php
+use Illuminate\Support\Facades\Event;
+use Woweb\Zgw\Events\ZgwRequestSent;
+
+Event::listen(function (ZgwRequestSent $event): void {
+    Log::channel('audit')->info('ZGW request', [
+        'connection' => $event->connection,
+        'method' => $event->method,
+        'status' => $event->status,
+        // $event->uri may contain personal data in its query string; redact before storing.
+    ]);
+});
+```
 
 ## Testing
 

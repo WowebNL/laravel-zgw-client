@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Connection;
 
+use Closure;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Throwable;
 use Woweb\Zgw\Api\AutorisatiesApi;
 use Woweb\Zgw\Api\BesluitenApi;
 use Woweb\Zgw\Api\CatalogiApi;
@@ -15,6 +22,7 @@ use Woweb\Zgw\Api\ZakenApi;
 use Woweb\Zgw\Auth\ClientSecretValidator;
 use Woweb\Zgw\Contracts\AuthorizationInterface;
 use Woweb\Zgw\Enums\ZgwVersion;
+use Woweb\Zgw\Events\ZgwRequestSent;
 use Woweb\Zgw\Exceptions\DisallowedHostException;
 use Woweb\Zgw\Exceptions\InvalidConfigurationException;
 
@@ -24,6 +32,7 @@ readonly class ZgwConnection
     public function __construct(
         private readonly array $config,
         private readonly AuthorizationInterface $authorization,
+        private readonly string $name = '',
     ) {
         // Fail fast on a weak signing secret before any request can be made with it.
         (new ClientSecretValidator)->validate(
@@ -196,9 +205,176 @@ readonly class ZgwConnection
      */
     public function request(): PendingRequest
     {
-        return Http::withHeaders($this->getHeaders())
+        $request = Http::withHeaders($this->getHeaders())
             ->connectTimeout($this->getConnectTimeout())
             ->timeout($this->getTimeout());
+
+        return $this->applyRetry($this->withAuditTrail($request));
+    }
+
+    /**
+     * The configured name of this connection (empty when built outside the manager).
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Attach a middleware that emits a ZgwRequestSent event for every response received.
+     *
+     * The event is a seam for request-level audit logging; with no listeners it costs nothing.
+     * It fires per HTTP exchange, so each retry attempt emits its own event.
+     */
+    private function withAuditTrail(PendingRequest $request): PendingRequest
+    {
+        return $request->withMiddleware(function (callable $handler): callable {
+            /**
+             * @param  array<string, mixed>  $options
+             */
+            return function (RequestInterface $psrRequest, array $options) use ($handler): PromiseInterface {
+                return $handler($psrRequest, $options)->then(
+                    function (ResponseInterface $response) use ($psrRequest): ResponseInterface {
+                        Event::dispatch(new ZgwRequestSent(
+                            $this->name,
+                            $this->getCacheNamespace(),
+                            $psrRequest->getMethod(),
+                            (string) $psrRequest->getUri(),
+                            $response->getStatusCode(),
+                        ));
+
+                        return $response;
+                    }
+                );
+            };
+        });
+    }
+
+    /**
+     * Apply the connection's transient-failure retry policy, if configured.
+     *
+     * Retries are opt-in (retry_times defaults to 0). Only idempotent methods are retried, and
+     * only on a connection error, a 429, or a 5xx response. The final attempt's response is
+     * returned as-is (throw: false), so a genuine failure still surfaces through the package's
+     * own response validation rather than a raw Laravel exception.
+     */
+    private function applyRetry(PendingRequest $request): PendingRequest
+    {
+        $times = $this->getRetryTimes();
+
+        if ($times < 1) {
+            return $request;
+        }
+
+        return $request->retry(
+            $times + 1,
+            $this->retrySleepCallback(),
+            $this->retryDecisionCallback(),
+            throw: false,
+        );
+    }
+
+    /**
+     * Decide whether a failed attempt should be retried.
+     *
+     * Only idempotent methods (GET, HEAD, PUT, DELETE) are eligible, so a create or update is
+     * never silently repeated. A missing status (a connection-level error) is treated as transient.
+     *
+     * @return callable(Throwable, PendingRequest, ?string): bool
+     */
+    private function retryDecisionCallback(): callable
+    {
+        return function (Throwable $exception, PendingRequest $request, ?string $method): bool {
+            if (! in_array(strtoupper((string) $method), ['GET', 'HEAD', 'PUT', 'DELETE'], true)) {
+                return false;
+            }
+
+            $status = $exception instanceof RequestException ? $exception->response->status() : null;
+
+            if ($status === null) {
+                return true;
+            }
+
+            return $status === 429 || $status >= 500;
+        };
+    }
+
+    /**
+     * The wait (in milliseconds) before the next attempt.
+     *
+     * Honours a Retry-After header when present (seconds or an HTTP date), otherwise backs off
+     * exponentially from retry_sleep_ms. The result is capped at retry_max_sleep_ms either way.
+     *
+     * @return Closure(int, mixed): int
+     */
+    private function retrySleepCallback(): Closure
+    {
+        $base = $this->getRetrySleepMs();
+        $max = $this->getRetryMaxSleepMs();
+
+        return function (int $attempt, mixed $exception) use ($base, $max): int {
+            $retryAfter = $this->retryAfterMs($exception);
+
+            if ($retryAfter !== null) {
+                return min($retryAfter, $max);
+            }
+
+            return (int) min($base * (2 ** ($attempt - 1)), $max);
+        };
+    }
+
+    /**
+     * Parse a Retry-After header from the failed response into milliseconds, or null when absent.
+     *
+     * Supports both forms allowed by the HTTP spec: a delay in seconds and an HTTP date.
+     */
+    private function retryAfterMs(mixed $exception): ?int
+    {
+        if (! $exception instanceof RequestException) {
+            return null;
+        }
+
+        $header = trim($exception->response->header('Retry-After'));
+
+        if ($header === '') {
+            return null;
+        }
+
+        if (ctype_digit($header)) {
+            return (int) $header * 1000;
+        }
+
+        $timestamp = strtotime($header);
+
+        if ($timestamp === false) {
+            return null;
+        }
+
+        return max(0, $timestamp - time()) * 1000;
+    }
+
+    /**
+     * Number of extra attempts after the first for transient failures (0 disables retries).
+     */
+    public function getRetryTimes(): int
+    {
+        return max(0, (int) ($this->config['retry_times'] ?? 0));
+    }
+
+    /**
+     * Base backoff (milliseconds) between retry attempts.
+     */
+    public function getRetrySleepMs(): int
+    {
+        return max(0, (int) ($this->config['retry_sleep_ms'] ?? 100));
+    }
+
+    /**
+     * Maximum backoff (milliseconds) between retry attempts; also caps a Retry-After wait.
+     */
+    public function getRetryMaxSleepMs(): int
+    {
+        return max(0, (int) ($this->config['retry_max_sleep_ms'] ?? 5000));
     }
 
     /**

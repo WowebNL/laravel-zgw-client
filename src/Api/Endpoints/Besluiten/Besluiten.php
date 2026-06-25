@@ -12,8 +12,15 @@ use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\DeletesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\PatchesResource;
+use Woweb\Zgw\Contracts\ProvidesAuditTrail;
+use Woweb\Zgw\Contracts\ReplacesResource;
+use Woweb\Zgw\Contracts\ShowsResource;
 
-class Besluiten extends AbstractEndpoint
+class Besluiten extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ProvidesAuditTrail, ReplacesResource, ShowsResource
 {
     use Audittrail;
     use Delete;

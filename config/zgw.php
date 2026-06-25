@@ -128,6 +128,21 @@ return [
             */
             'max_pages' => (int) env('ZGW_MAX_PAGES', 1000),
 
+            /*
+            | Transient-failure retry. Opt-in and off by default (retry_times 0), so behaviour
+            | is unchanged unless you enable it. When set, only idempotent requests (GET, HEAD,
+            | PUT, DELETE) are retried, and only on a connection error, an HTTP 429, or a 5xx
+            | response. Create and update calls (POST, PATCH) are never retried automatically,
+            | so a half-applied write is never repeated against the registry.
+            |
+            | retry_times is the number of extra attempts after the first. The wait between
+            | attempts honours a Retry-After header when the upstream sends one, otherwise it
+            | backs off exponentially from retry_sleep_ms, capped at retry_max_sleep_ms.
+            */
+            'retry_times' => (int) env('ZGW_RETRY_TIMES', 0),
+            'retry_sleep_ms' => (int) env('ZGW_RETRY_SLEEP_MS', 100),
+            'retry_max_sleep_ms' => (int) env('ZGW_RETRY_MAX_SLEEP_MS', 5000),
+
         ],
 
     ],

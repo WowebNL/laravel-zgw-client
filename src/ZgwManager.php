@@ -42,6 +42,6 @@ class ZgwManager
             );
         }
 
-        return new ZgwConnection($connections[$name], $this->authorization);
+        return new ZgwConnection($connections[$name], $this->authorization, $name);
     }
 }

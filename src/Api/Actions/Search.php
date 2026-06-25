@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Api\Actions;
 
 use Illuminate\Support\LazyCollection;
+use Woweb\Zgw\Contracts\SearchesResources;
 
+/**
+ * @phpstan-require-implements SearchesResources
+ */
 trait Search
 {
     /**

@@ -11,8 +11,14 @@ use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\DeletesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\PatchesResource;
+use Woweb\Zgw\Contracts\ReplacesResource;
+use Woweb\Zgw\Contracts\ShowsResource;
 
-class Roltypen extends AbstractEndpoint
+class Roltypen extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ReplacesResource, ShowsResource
 {
     use Delete;
     use Index;

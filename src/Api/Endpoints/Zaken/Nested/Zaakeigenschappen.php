@@ -12,8 +12,14 @@ use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Connection\ZgwConnection;
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\DeletesResource;
+use Woweb\Zgw\Contracts\ListsResources;
+use Woweb\Zgw\Contracts\PatchesResource;
+use Woweb\Zgw\Contracts\ReplacesResource;
+use Woweb\Zgw\Contracts\ShowsResource;
 
-class Zaakeigenschappen extends AbstractEndpoint
+class Zaakeigenschappen extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, ReplacesResource, ShowsResource
 {
     use Delete;
     use Index;

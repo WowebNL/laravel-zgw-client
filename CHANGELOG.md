@@ -28,6 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   define throws `UnsupportedOperationException` before any request is sent. The available releases
   per operation live in `OperationAvailability` and are verified against the specs by the contract
   tests.
+- Capability interfaces in `Woweb\Zgw\Contracts` (`ListsResources`, `ShowsResource`,
+  `CreatesResource`, `PatchesResource`, `ReplacesResource`, `DeletesResource`, `PublishesResource`,
+  `SearchesResources`, `ProvidesAuditTrail`), one per action trait. Each endpoint declares the
+  operations it supports through its `implements` clause, and each trait requires its interface via
+  `@phpstan-require-implements`, so a missing declaration is a static error rather than a runtime
+  surprise.
+- Opt-in transient-failure retries per connection (`retry_times`, `retry_sleep_ms`,
+  `retry_max_sleep_ms`), off by default. Only idempotent requests are retried, only on a connection
+  error, a 429 or a 5xx, honouring a `Retry-After` header. Create and update calls are never retried.
+- A `ZgwRequestSent` event dispatched after every response, for request-level audit logging.
 
 ### Changed
 
