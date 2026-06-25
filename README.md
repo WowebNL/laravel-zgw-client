@@ -2,15 +2,13 @@
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/ci.yml?branch=main&label=tests)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
 [![Contracts](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/contract.yml?branch=main&label=contracts)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/contract.yml)
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/GIST_OWNER/GIST_ID/raw/coverage.json)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Michel-Verhoeven/1222acb05213ce4c584005c4364ecdf5/raw/laravel-zgw-apis-coverage.json)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
 [![Code style: Pint](https://img.shields.io/badge/code%20style-pint-orange.svg)](https://laravel.com/docs/pint)
 [![License: EUPL-1.2](https://img.shields.io/badge/license-EUPL--1.2-blue.svg)](LICENSE.md)
 
-<!-- Coverage badge setup (one-time): create a secret Gist containing a coverage.json file, add a
-personal access token with the "gist" scope as the GIST_SECRET repository secret, set the
-COVERAGE_GIST_ID repository variable to the Gist id, and replace GIST_OWNER and GIST_ID in the
-Coverage badge URL above with your Gist owner and id. The coverage job on main then keeps it
-current. -->
+<!-- Coverage badge: the percentage is read from a secret Gist, updated by the coverage job on main.
+The Gist owner and id live in the badge URL above; the COVERAGE_GIST_ID repository variable and a
+GIST_SECRET repository secret (a token with the "gist" scope) drive the update. -->
 
 
 Laravel package for interacting with the Dutch ZGW (Zaakgericht Werken) APIs: Zaken, Catalogi, Documenten, Besluiten, Autorisaties and Notificaties. It supports the ZGW standard releases 1.5, 1.6 and 1.7.
