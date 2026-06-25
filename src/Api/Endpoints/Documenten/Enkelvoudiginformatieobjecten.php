@@ -74,14 +74,19 @@ class Enkelvoudiginformatieobjecten extends AbstractEndpoint implements CreatesR
     /**
      * Download the binary content of a document.
      *
+     * Accepts the query parameters the standard defines for this operation, in particular `versie`
+     * and `registratieOp` to retrieve a specific or point-in-time version of the content.
+     *
+     * @param  array<string, mixed>  $params  Optional query parameters (for example `versie`).
+     *
      * @throws ApiRequestException
      */
-    public function download(string $uuid): string
+    public function download(string $uuid, array $params = []): string
     {
         $this->assertSupported('GET', $this->itemTemplate().'/download');
 
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/download';
-        $response = $this->connection->request()->get($url);
+        $response = $this->connection->request()->get($url, $params);
 
         if ($response->failed()) {
             throw new ApiRequestException(

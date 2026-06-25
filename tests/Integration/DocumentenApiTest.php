@@ -103,4 +103,37 @@ class DocumentenApiTest extends TestCase
         $this->assertCount(2, $trail);
         $this->assertSame('audit-1', $trail->first()['uuid']);
     }
+
+    public function test_download_returns_binary_body(): void
+    {
+        $uuid = 'doc-uuid';
+
+        Http::fake([
+            self::BASE.'enkelvoudiginformatieobjecten/'.$uuid.'/download' => Http::response('PDF-BYTES'),
+        ]);
+
+        $content = Zgw::connection('main')
+            ->documenten()
+            ->enkelvoudiginformatieobjecten()
+            ->download($uuid);
+
+        $this->assertSame('PDF-BYTES', $content);
+    }
+
+    public function test_download_forwards_query_parameters(): void
+    {
+        $uuid = 'doc-uuid';
+
+        Http::fake([
+            self::BASE.'enkelvoudiginformatieobjecten/'.$uuid.'/download*' => Http::response('VERSION-2-BYTES'),
+        ]);
+
+        $content = Zgw::connection('main')
+            ->documenten()
+            ->enkelvoudiginformatieobjecten()
+            ->download($uuid, ['versie' => 2]);
+
+        $this->assertSame('VERSION-2-BYTES', $content);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'versie=2'));
+    }
 }
