@@ -19,11 +19,15 @@ declare(strict_types=1);
 
 require __DIR__.'/../vendor/autoload.php';
 
+use Woweb\Zgw\Contracts\CreatesResource;
+use Woweb\Zgw\Contracts\PatchesResource;
+use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Data\Casts\GeoJsonCast;
 use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Dev\Dto\DtoGenerator;
 use Woweb\Zgw\Dev\Dto\EndpointResources;
 use Woweb\Zgw\Dev\Dto\TypedMapGenerator;
+use Woweb\Zgw\Dev\Dto\WriteBuilderGenerator;
 
 $root = dirname(__DIR__);
 $generatedDir = $root.'/src/Data/Generated';
@@ -88,6 +92,23 @@ foreach ($resources as $resource) {
 }
 
 /**
+ * Write-capable root schemas per component: those whose endpoint can create, patch or replace, so
+ * a write builder is only generated for resources that actually accept a write payload.
+ *
+ * @var array<string, array<string, true>> $writableRootsByComponent
+ */
+$writableRootsByComponent = [];
+foreach ($resources as $endpoint => $resource) {
+    $writeCapable = is_subclass_of($endpoint, CreatesResource::class)
+        || is_subclass_of($endpoint, PatchesResource::class)
+        || is_subclass_of($endpoint, ReplacesResource::class);
+
+    if ($writeCapable) {
+        $writableRootsByComponent[$resource->component][$resource->schema] ??= true;
+    }
+}
+
+/**
  * Root schema names per component, so a generator can resolve a cross-component external $ref (an
  * expanded zaak referencing the catalogi ZaakType) to the generated DTO in that component.
  *
@@ -138,5 +159,31 @@ $mapGenerator = new TypedMapGenerator(
 
 $mapGenerator->generate();
 $total++;
+
+// Write builders: regenerate the per-component subdirectories under src/Data/Writes, leaving the
+// hand-written WriteBuilder base in place.
+$writesDir = $root.'/src/Data/Writes';
+$writesNamespace = 'Woweb\\Zgw\\Data\\Writes';
+
+foreach (glob($writesDir.'/*', GLOB_ONLYDIR) ?: [] as $componentDir) {
+    foreach (glob($componentDir.'/*.php') ?: [] as $file) {
+        unlink($file);
+    }
+    rmdir($componentDir);
+}
+
+foreach ($writableRootsByComponent as $component => $schemas) {
+    $componentNamespace = EndpointResources::componentNamespace($component);
+
+    $writeGenerator = new WriteBuilderGenerator(
+        component: $component,
+        rootSchemas: array_keys($schemas),
+        namespace: $writesNamespace.'\\'.$componentNamespace,
+        outDir: $writesDir.'/'.$componentNamespace,
+        enumNamespace: $baseNamespace.'\\'.$componentNamespace.'\\Enums',
+    );
+
+    $total += count($writeGenerator->generate());
+}
 
 echo "{$total} files generated across ".count($rootsByComponent)." components.\n";

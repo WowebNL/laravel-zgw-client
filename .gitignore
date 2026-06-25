@@ -8,3 +8,6 @@ composer.lock
 # Fetched ZGW OpenAPI specs (downloaded by scripts/fetch-specs.php) and generated reports
 /tests/fixtures/specs/
 /build/
+
+# Deptrac analysis cache
+.deptrac.cache

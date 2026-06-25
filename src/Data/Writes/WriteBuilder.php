@@ -58,6 +58,14 @@ abstract class WriteBuilder
     }
 
     /**
+     * Normalise a date-time value to an ISO 8601 string, preserving null.
+     */
+    protected function dateTime(DateTimeInterface|string|null $value): ?string
+    {
+        return $value instanceof DateTimeInterface ? $value->format(DateTimeInterface::ATOM) : $value;
+    }
+
+    /**
      * Normalise an enum value to its backing scalar, preserving null.
      */
     protected function enum(BackedEnum|string|int|null $value): string|int|null

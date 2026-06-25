@@ -8,7 +8,7 @@ use Carbon\CarbonImmutable;
 use PHPUnit\Framework\TestCase;
 use Woweb\Zgw\Data\Generated\Zaken\Enums\Vertrouwelijkheidaanduiding;
 use Woweb\Zgw\Data\Values\Reference;
-use Woweb\Zgw\Data\Writes\ZaakWrite;
+use Woweb\Zgw\Data\Writes\Zaken\ZaakWrite;
 
 class ZaakWriteTest extends TestCase
 {

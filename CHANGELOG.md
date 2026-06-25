@@ -58,8 +58,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `zaaktype` becomes a catalogi DTO and its `informatieobjecten` documenten DTOs), resolving
   recursively. `_expand` is null on a response that was not expanded, and a related resource the
   generator cannot map to a DTO degrades to a raw array rather than being dropped.
+- Generated write builders for every write-capable resource (`Woweb\Zgw\Data\Writes\{Component}`),
+  one typed setter per writable (not readOnly) field, normalising references, dates and enums. A
+  contract test keeps the setters in step with the writable spec fields. Reference normalisation
+  accepts a `Reference` or a URL string, dates accept a `DateTimeInterface` or a string.
+- Layering gate (Deptrac): the array kernel (`Api`) may not depend on the optional typed layer
+  (`Data`); the dependency may only point the other way. Enforced in CI.
 
 ### Changed
+
+- Moved the `#[ZgwResource]` attribute from `Woweb\Zgw\Data\Attributes` to `Woweb\Zgw\Api\Attributes`.
+  It annotates endpoints (the `Api` layer), so keeping it under `Data` made every endpoint depend on
+  the typed layer. This only affects code that referenced the attribute class directly.
 
 - `index()` now returns a `LazyCollection` that paginates on demand instead of an eagerly
   realised `Collection`. Iterate it, or call `->all()` / `->collect()` to realise everything

@@ -11,6 +11,7 @@ use Woweb\Zgw\Api\Actions\Publish;
 use Woweb\Zgw\Api\Actions\Put;
 use Woweb\Zgw\Api\Actions\Show;
 use Woweb\Zgw\Api\Actions\Store;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
@@ -19,7 +20,6 @@ use Woweb\Zgw\Contracts\PatchesResource;
 use Woweb\Zgw\Contracts\PublishesResource;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 
 #[ZgwResource(schema: 'InformatieObjectType', component: 'catalogi')]
 class Informatieobjecttypen extends AbstractEndpoint implements CreatesResource, DeletesResource, ListsResources, PatchesResource, PublishesResource, ReplacesResource, ShowsResource

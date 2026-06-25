@@ -8,7 +8,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use SplFileInfo;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 
 /**
  * Discovers the endpoints annotated with #[ZgwResource], the single source of truth for which

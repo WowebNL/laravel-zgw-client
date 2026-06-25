@@ -8,9 +8,9 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use SplFileInfo;
+use Woweb\Zgw\Api\Attributes\ZgwResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\ShowsResource;
-use Woweb\Zgw\Data\Attributes\ZgwResource;
 use Woweb\Zgw\Data\Generated\TypedMap;
 use Woweb\Zgw\Tests\Contract\Support\ReleaseMatrix;
 
