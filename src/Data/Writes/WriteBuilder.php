@@ -8,6 +8,7 @@ use BackedEnum;
 use Carbon\CarbonInterval;
 use DateInterval;
 use DateTimeInterface;
+use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
 
 /**
@@ -83,5 +84,23 @@ abstract class WriteBuilder
     protected function duration(DateInterval|string|null $value): ?string
     {
         return $value instanceof DateInterval ? CarbonInterval::instance($value)->spec() : $value;
+    }
+
+    /**
+     * Set a polymorphic identification field from a value read off the API, so it round-trips into a
+     * write without reaching for ->raw.
+     *
+     * ZGW models a Rol's betrokkeneIdentificatie and a ZaakObject's objectIdentificatie
+     * polymorphically (the concrete shape is chosen by a sibling discriminator), so these fields
+     * have no generated typed setter. Read back, the value is either the typed sub-DTO the
+     * discriminator resolved or, for a type kept untyped, the raw array. This accepts both: a DTO is
+     * reduced to its write-shape (the source fields only, see {@see Data::toWriteArray()}), an array
+     * is passed through, and null clears the field.
+     *
+     * @param  Data|array<string, mixed>|null  $value
+     */
+    public function identification(string $field, Data|array|null $value): static
+    {
+        return $this->set($field, $value instanceof Data ? $value->toWriteArray() : $value);
     }
 }

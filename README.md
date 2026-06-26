@@ -441,6 +441,20 @@ Setting `min_length` to `0` with all character classes `false` disables the pack
 
 **The 32-byte floor cannot be removed for HS256.** Disabling the package validation does not allow an arbitrarily short secret. `firebase/php-jwt` 7 enforces the RFC 7518 minimum HMAC key length, so an HS256 secret shorter than 32 bytes is rejected at sign time with `DomainException: Provided key is too short`, no matter what `secret_rules` says. In practice `secret_rules` lets you relax the composition requirements and adjust the length down to 32 bytes; 32 bytes is the immovable lower bound for HS256.
 
+Connections are built lazily, so a weak secret in a connection you have not used yet surfaces only on first use. To check configuration up front (handy with one credential per municipality), validate without making any request:
+
+```php
+Zgw::validate('gemeente-x'); // throws WeakSecretException for a weak/misconfigured secret
+Zgw::validateAll();          // validates every configured connection, naming the first that fails
+```
+
+To go one step further and confirm a connection works end to end (base URL reachable, credential accepted by the provider), run a light read smoke-test. It makes one real request (a catalogi `catalogussen` list, page 1), so the catalogi API must be configured and readable for the connection:
+
+```php
+Zgw::connection('gemeente-x')->assertUsable(); // throws the underlying request error on failure
+Zgw::connection('gemeente-x')->isUsable();     // the same as a boolean, for a health dashboard
+```
+
 ### Host allowlist
 
 When `index()` follows a `next` link, or when you call `DirectEndpoint::getByUrl()`, the package only sends the bearer token to a trusted origin. Trusted origins are the configured base URLs of the connection plus anything in `allowed_hosts`. A request to any other origin throws `DisallowedHostException` before the token leaves your application. This prevents a tampered or unexpected response from redirecting your credential to an untrusted host. If your provider legitimately returns links to a different host (for example a separate document download domain), add that origin to `allowed_hosts` (a full URL or a bare host, which is treated as https).
@@ -556,6 +570,22 @@ if ($rol->betrokkeneIdentificatie instanceof RolNatuurlijkPersoon) {
 }
 ```
 
+A value read off the API also round-trips into a write. Any DTO serialises back with `toArray()` (a full snapshot) or `toWriteArray()` (only the fields that were present in the source, so nothing is emitted as null). For a polymorphic identification the write builders have no generated setter, so `identification()` takes the read value (the typed sub-DTO or, for a type kept untyped, the raw array) and produces a body identical to the source, without touching `$raw`.
+
+```php
+$source = Typed::wrap(Zgw::connection('main')->zaken()->rollen())->show($uuid);
+
+// Copy a rol verbatim onto another zaak.
+$payload = (new RolWrite)
+    ->zaak($targetZaakUrl)
+    ->betrokkeneType($source->betrokkeneType)
+    ->roltype($source->roltype)
+    ->identification('betrokkeneIdentificatie', $source->betrokkeneIdentificatie)
+    ->toPayload();
+
+Zgw::connection('main')->zaken()->rollen()->store($payload);
+```
+
 A resource fetched with `?expand=` carries a typed `_expand` DTO with the embedded related resources, resolved recursively and across components (an expanded zaak's `zaaktype` is a catalogi DTO, its `informatieobjecten` documenten DTOs). It is null when the response was not expanded, and a relation the generator cannot map to a DTO stays a raw array.
 
 ```php
@@ -563,6 +593,16 @@ $zaak = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->show($uuid, ['ex
 
 $zaak->_expand?->zaaktype?->identificatie;     // catalogi ZaakTypeData, typed
 $zaak->_expand?->rollen[0]?->betrokkeneIdentificatie; // recursively typed
+```
+
+The audit trail is typed too. It has the same shape on every resource that exposes one, so it hydrates into a single shared `AuditTrailData` (with a typed `bron` enum, an `aanmaakdatum` and the `wijzigingen` before and after) rather than the resource's own DTO.
+
+```php
+$trail = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->audittrail($uuid);
+
+$trail->first()?->actie;          // 'create', 'update', ...
+$trail->first()?->aanmaakdatum;   // CarbonImmutable|null
+$trail->first()?->wijzigingen?->nieuw; // the new state, or null
 ```
 
 ## Events

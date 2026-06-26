@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
 use Woweb\Zgw\Contracts\CreatesResource;
 use Woweb\Zgw\Contracts\DeletesResource;
 use Woweb\Zgw\Contracts\ListsResources;
 use Woweb\Zgw\Contracts\PatchesResource;
+use Woweb\Zgw\Contracts\ProvidesAuditTrail;
 use Woweb\Zgw\Contracts\ReplacesResource;
 use Woweb\Zgw\Contracts\SearchesResources;
 use Woweb\Zgw\Contracts\ShowsResource;
+use Woweb\Zgw\Data\Generated\Audittrail\AuditTrailData;
 
 /**
  * A typed decorator over a kernel endpoint: it calls the same array-returning endpoint and
@@ -113,6 +116,33 @@ final class TypedEndpoint
         assert($endpoint instanceof SearchesResources);
 
         return $endpoint->zoek($params)->map(fn (array $row): Data => ($this->dto)::from($row));
+    }
+
+    /**
+     * The audit trail of a resource as typed AuditTrailData entries.
+     *
+     * The audit trail has the same shape on every resource that exposes one, so it hydrates into a
+     * single shared DTO rather than the wrapped endpoint's resource DTO.
+     *
+     * @return Collection<int, AuditTrailData>
+     */
+    public function audittrail(string $uuid): Collection
+    {
+        $endpoint = $this->endpoint;
+        assert($endpoint instanceof ProvidesAuditTrail);
+
+        return $endpoint->audittrail($uuid)->map(fn (array $row): AuditTrailData => AuditTrailData::from($row));
+    }
+
+    /**
+     * A single audit trail entry of a resource as a typed AuditTrailData.
+     */
+    public function audittrailItem(string $uuid, string $auditUuid): AuditTrailData
+    {
+        $endpoint = $this->endpoint;
+        assert($endpoint instanceof ProvidesAuditTrail);
+
+        return AuditTrailData::from($endpoint->audittrailItem($uuid, $auditUuid));
     }
 
     /**

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Tests\Integration;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 use InvalidArgumentException;
 use ReflectionProperty;
 use Woweb\Zgw\Api\Endpoints\AbstractEndpoint;
+use Woweb\Zgw\Data\Generated\Audittrail\AuditTrailData;
+use Woweb\Zgw\Data\Generated\Audittrail\Enums\Bron;
+use Woweb\Zgw\Data\Generated\Audittrail\Wijzigingen;
 use Woweb\Zgw\Data\Generated\Zaken\ZaakData;
 use Woweb\Zgw\Data\Typed;
 use Woweb\Zgw\Data\Values\Reference;
@@ -147,6 +151,63 @@ class TypedEndpointTest extends TestCase
         $first = $result->first();
         $this->assertInstanceOf(ZaakData::class, $first);
         $this->assertSame('ZAAK-z1', $first->identificatie);
+    }
+
+    public function test_audittrail_returns_typed_entries(): void
+    {
+        $uuid = '11111111-1111-1111-1111-111111111111';
+
+        Http::fake([
+            self::BASE.'zaken/'.$uuid.'/audittrail' => Http::response([
+                [
+                    'uuid' => 'a0000000-0000-0000-0000-000000000001',
+                    'bron' => 'zrc',
+                    'actie' => 'create',
+                    'aanmaakdatum' => '2024-03-01T10:00:00+00:00',
+                    'hoofdObject' => self::BASE.'zaken/'.$uuid,
+                    'wijzigingen' => ['oud' => null, 'nieuw' => ['toelichting' => 'x']],
+                ],
+                [
+                    'uuid' => 'a0000000-0000-0000-0000-000000000002',
+                    'bron' => 'zrc',
+                    'actie' => 'update',
+                    'aanmaakdatum' => '2024-03-02T11:00:00+00:00',
+                ],
+            ]),
+        ]);
+
+        $trail = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->audittrail($uuid);
+
+        $this->assertCount(2, $trail);
+
+        $first = $trail->first();
+        $this->assertInstanceOf(AuditTrailData::class, $first);
+        $this->assertSame(Bron::Zrc, $first->bron);
+        $this->assertSame('create', $first->actie);
+        $this->assertInstanceOf(CarbonImmutable::class, $first->aanmaakdatum);
+        $this->assertInstanceOf(Reference::class, $first->hoofdObject);
+        $this->assertInstanceOf(Wijzigingen::class, $first->wijzigingen);
+        $this->assertSame(['toelichting' => 'x'], $first->wijzigingen->nieuw);
+    }
+
+    public function test_audittrail_item_returns_a_typed_entry(): void
+    {
+        $uuid = '11111111-1111-1111-1111-111111111111';
+        $auditUuid = 'a0000000-0000-0000-0000-000000000001';
+
+        Http::fake([
+            self::BASE.'zaken/'.$uuid.'/audittrail/'.$auditUuid => Http::response([
+                'uuid' => $auditUuid,
+                'bron' => 'zrc',
+                'actie' => 'create',
+            ]),
+        ]);
+
+        $entry = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->audittrailItem($uuid, $auditUuid);
+
+        $this->assertInstanceOf(AuditTrailData::class, $entry);
+        $this->assertSame($auditUuid, $entry->uuid);
+        $this->assertSame('create', $entry->actie);
     }
 
     public function test_wrap_throws_for_an_unmapped_endpoint(): void
