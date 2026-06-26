@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Duration write fields across the Catalogi write builders (a Zaaktype's `doorlooptijd`,
+  `servicenorm` and `verlengingstermijn`, a Resultaattype's `archiefactietermijn` and
+  `procestermijn`, a Besluittype's `publicatietermijn` and `reactietermijn`, a Statustype's
+  `doorlooptijd`) now accept a `DateInterval` and normalise it to its ISO 8601 string, mirroring the
+  `DurationCast` on the read side. A duration read from the API (a `CarbonInterval`) drops straight
+  back into a write without the caller formatting it by hand. A string is still accepted unchanged.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added

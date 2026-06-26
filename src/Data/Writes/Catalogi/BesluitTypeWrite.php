@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data\Writes\Catalogi;
 
+use DateInterval;
 use DateTimeInterface;
 use Woweb\Zgw\Data\Values\Reference;
 use Woweb\Zgw\Data\Writes\WriteBuilder;
@@ -41,9 +42,9 @@ final class BesluitTypeWrite extends WriteBuilder
         return $this->set('besluitcategorie', $value);
     }
 
-    public function reactietermijn(?string $value): static
+    public function reactietermijn(DateInterval|string|null $value): static
     {
-        return $this->set('reactietermijn', $value);
+        return $this->set('reactietermijn', $this->duration($value));
     }
 
     public function publicatieIndicatie(?bool $value): static
@@ -56,9 +57,9 @@ final class BesluitTypeWrite extends WriteBuilder
         return $this->set('publicatietekst', $value);
     }
 
-    public function publicatietermijn(?string $value): static
+    public function publicatietermijn(DateInterval|string|null $value): static
     {
-        return $this->set('publicatietermijn', $value);
+        return $this->set('publicatietermijn', $this->duration($value));
     }
 
     public function toelichting(?string $value): static

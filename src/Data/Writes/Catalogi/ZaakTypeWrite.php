@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data\Writes\Catalogi;
 
+use DateInterval;
 use DateTimeInterface;
 use Woweb\Zgw\Data\Generated\Catalogi\Enums\IndicatieInternOfExtern;
 use Woweb\Zgw\Data\Generated\Catalogi\Enums\Vertrouwelijkheidaanduiding;
@@ -78,14 +79,14 @@ final class ZaakTypeWrite extends WriteBuilder
         return $this->set('handelingBehandelaar', $value);
     }
 
-    public function doorlooptijd(?string $value): static
+    public function doorlooptijd(DateInterval|string|null $value): static
     {
-        return $this->set('doorlooptijd', $value);
+        return $this->set('doorlooptijd', $this->duration($value));
     }
 
-    public function servicenorm(?string $value): static
+    public function servicenorm(DateInterval|string|null $value): static
     {
-        return $this->set('servicenorm', $value);
+        return $this->set('servicenorm', $this->duration($value));
     }
 
     public function opschortingEnAanhoudingMogelijk(?bool $value): static
@@ -98,9 +99,9 @@ final class ZaakTypeWrite extends WriteBuilder
         return $this->set('verlengingMogelijk', $value);
     }
 
-    public function verlengingstermijn(?string $value): static
+    public function verlengingstermijn(DateInterval|string|null $value): static
     {
-        return $this->set('verlengingstermijn', $value);
+        return $this->set('verlengingstermijn', $this->duration($value));
     }
 
     /**
