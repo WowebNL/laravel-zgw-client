@@ -27,6 +27,7 @@ use Woweb\Zgw\Data\Values\GeoJsonGeometry;
 use Woweb\Zgw\Dev\Dto\DtoGenerator;
 use Woweb\Zgw\Dev\Dto\EndpointResources;
 use Woweb\Zgw\Dev\Dto\TypedMapGenerator;
+use Woweb\Zgw\Dev\Dto\TypedReturnTypeGenerator;
 use Woweb\Zgw\Dev\Dto\WriteBuilderGenerator;
 
 $root = dirname(__DIR__);
@@ -150,6 +151,23 @@ foreach ($rootsByComponent as $component => $schemas) {
     $total += count($generator->generate());
 }
 
+// Audit trail: a shared cross-component read with the same shape on every resource, so it gets one
+// DTO in its own Audittrail namespace rather than a per-component copy. The schema lives in the
+// zaken spec; the typed layer exposes it through TypedEndpoint::audittrail(), not the endpoint map.
+$auditGenerator = new DtoGenerator(
+    component: 'zaken',
+    rootSchemas: ['AuditTrail'],
+    namespace: $baseNamespace.'\\Audittrail',
+    outDir: $generatedDir.'/Audittrail',
+    opaque: $opaque,
+    valueObjects: $valueObjects,
+    discriminators: $discriminators,
+    baseNamespace: $baseNamespace,
+    rootSchemasByComponent: $rootSchemasByComponent,
+);
+
+$total += count($auditGenerator->generate());
+
 $mapGenerator = new TypedMapGenerator(
     endpointsDir: $root.'/src/Api/Endpoints',
     endpointNamespace: 'Woweb\\Zgw\\Api\\Endpoints',
@@ -158,6 +176,18 @@ $mapGenerator = new TypedMapGenerator(
 );
 
 $mapGenerator->generate();
+$total++;
+
+// Rewrite the conditional @phpstan-return on Typed::wrap() from the same endpoint to DTO map, so a
+// caller gets the concrete DTO statically. Only the marked block in Typed.php is touched.
+$returnTypeGenerator = new TypedReturnTypeGenerator(
+    endpointsDir: $root.'/src/Api/Endpoints',
+    endpointNamespace: 'Woweb\\Zgw\\Api\\Endpoints',
+    dtoNamespace: $baseNamespace,
+    typedFile: $root.'/src/Data/Typed.php',
+);
+
+$returnTypeGenerator->generate();
 $total++;
 
 // Write builders: regenerate the per-component subdirectories under src/Data/Writes, leaving the

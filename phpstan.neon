@@ -5,4 +5,13 @@ parameters:
     paths:
         - src
         - dev
+        - tests/Types
     level: 8
+    ignoreErrors:
+        # Typed::wrap() declares a generated conditional return type that maps each endpoint to its
+        # concrete TypedEndpoint<Dto>. The runtime body returns the generic TypedEndpoint<Data>, so
+        # PHPStan sees the concrete branches as "never returned". They exist for the caller's static
+        # type, not the body, so this rule does not apply to this method.
+        -
+            identifier: return.unusedType
+            path: src/Data/Typed.php

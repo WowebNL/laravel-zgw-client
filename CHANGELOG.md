@@ -18,6 +18,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `catalogussen` list, page 1) to confirm a connection works end to end, so a wrong base URL, an
   unreachable host or a credential the provider rejects is caught too. `assertUsable()` throws the
   underlying error; `isUsable()` returns a boolean for a health dashboard.
+- The audit trail is now typed. A generated `AuditTrailData` (in the `Woweb\Zgw\Data\Generated\Audittrail`
+  namespace, with a typed `bron` enum, an `aanmaakdatum` and the `wijzigingen` before and after)
+  hydrates the audit-trail entries of any resource that exposes one. `TypedEndpoint::audittrail()`
+  returns a `Collection<int, AuditTrailData>` and `audittrailItem()` a single `AuditTrailData`, so the
+  audit trail is no longer the one read that stayed an untyped array. The DTO is generated from the
+  spec and checked field by field by the contract suite, like the other read DTOs. The array API on
+  the endpoint (`->endpoint()->audittrail()`) is unchanged.
+- The base `Data` DTO now implements `Arrayable` and `JsonSerializable`. `$dto->toArray()` returns a
+  ZGW-conformant array with the casts reversed (a `Reference` becomes its URL, a backed enum its
+  value, a date or duration its ISO 8601 string, a nested DTO recurses), and `json_encode($dto)`
+  yields the same structure. Date and date-time fields keep their original granularity, so a date
+  stays `Y-m-d`. Forward-compatible fields kept in `extra` are preserved, so a round-trip drops
+  nothing. A read DTO can now be reused in a write, cached or handed to Filament/Livewire without
+  reaching for `->raw`.
+- `Data::toWriteArray()` returns the write-shape of a DTO: the casts reversed like `toArray()`, but
+  limited to the fields that were present in the source response, so a read value round-trips into a
+  write identical to the source instead of emitting every declared field as null. Nested DTOs are
+  write-shaped too.
+- `WriteBuilder::identification()` sets a polymorphic identification field (a Rol's
+  `betrokkeneIdentificatie`, a ZaakObject's `objectIdentificatie`) from a value read off the API.
+  These fields are modelled polymorphically and have no generated typed setter; the helper accepts
+  the typed sub-DTO (reduced to its write-shape) or the raw array kept for an untyped subtype, so a
+  rol or zaakobject can be copied verbatim onto another resource without reaching for `->raw`.
+- `Typed::wrap()` now carries a generated conditional return type, so the typed layer resolves to the
+  concrete DTO. `Typed::wrap($conn->zaken()->zaken())->show($uuid)` statically resolves to `ZaakData`
+  (and `->index()` to `LazyCollection<int, ZaakData>`) instead of the base `Data`, giving consumers
+  full static typing with no runtime change and no configuration on their side (the type travels in
+  the published docblock). The mapping is generated from `TypedMap` by `composer dto:generate`, so it
+  cannot drift, and is verified by `assertType` checks under PHPStan.
+- `Data\Values\Reference` now implements `JsonSerializable` and serialises to its bare URL string.
+  A `Reference` read from a DTO can be placed straight into a write payload: `json_encode($reference)`
+  yields the plain `"https://..."` link that ZGW expects, instead of a nested `{"url":...}` object.
 
 ## [1.1.0] - 2026-06-26
 

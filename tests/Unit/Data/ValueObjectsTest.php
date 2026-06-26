@@ -25,6 +25,22 @@ class ValueObjectsTest extends TestCase
         $this->assertNull((new Reference('https://example.com/'))->uuid());
     }
 
+    public function test_reference_json_encodes_to_the_bare_url(): void
+    {
+        $reference = new Reference('https://example.com/zaken/api/v1/zaken/abc-123');
+
+        $this->assertSame($reference->url, $reference->jsonSerialize());
+        $this->assertSame($reference->url, json_decode((string) json_encode($reference)));
+    }
+
+    public function test_reference_in_a_write_payload_serialises_as_a_standard_link(): void
+    {
+        $payload = ['zaak' => new Reference('https://example.com/zaken/api/v1/zaken/abc-123')];
+
+        // The reference is a plain URL string on the wire, not a nested {"url":...} object.
+        $this->assertSame(['zaak' => 'https://example.com/zaken/api/v1/zaken/abc-123'], json_decode((string) json_encode($payload), true));
+    }
+
     public function test_geojson_simple_geometry(): void
     {
         $geometry = new GeoJsonGeometry(['type' => 'Point', 'coordinates' => [4.9, 52.3]]);
