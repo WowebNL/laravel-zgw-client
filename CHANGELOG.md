@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `Typed::wrap()` now carries a generated conditional return type, so the typed layer resolves to the
+  concrete DTO. `Typed::wrap($conn->zaken()->zaken())->show($uuid)` statically resolves to `ZaakData`
+  (and `->index()` to `LazyCollection<int, ZaakData>`) instead of the base `Data`, giving consumers
+  full static typing with no runtime change and no configuration on their side (the type travels in
+  the published docblock). The mapping is generated from `TypedMap` by `composer dto:generate`, so it
+  cannot drift, and is verified by `assertType` checks under PHPStan.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added
