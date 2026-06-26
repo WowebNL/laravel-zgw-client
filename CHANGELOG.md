@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- The base `Data` DTO now implements `Arrayable` and `JsonSerializable`. `$dto->toArray()` returns a
+  ZGW-conformant array with the casts reversed (a `Reference` becomes its URL, a backed enum its
+  value, a date or duration its ISO 8601 string, a nested DTO recurses), and `json_encode($dto)`
+  yields the same structure. Date and date-time fields keep their original granularity, so a date
+  stays `Y-m-d`. Forward-compatible fields kept in `extra` are preserved, so a round-trip drops
+  nothing. A read DTO can now be reused in a write, cached or handed to Filament/Livewire without
+  reaching for `->raw`.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added
