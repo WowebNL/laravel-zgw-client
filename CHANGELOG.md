@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stays `Y-m-d`. Forward-compatible fields kept in `extra` are preserved, so a round-trip drops
   nothing. A read DTO can now be reused in a write, cached or handed to Filament/Livewire without
   reaching for `->raw`.
+- `Data::toWriteArray()` returns the write-shape of a DTO: the casts reversed like `toArray()`, but
+  limited to the fields that were present in the source response, so a read value round-trips into a
+  write identical to the source instead of emitting every declared field as null. Nested DTOs are
+  write-shaped too.
+- `WriteBuilder::identification()` sets a polymorphic identification field (a Rol's
+  `betrokkeneIdentificatie`, a ZaakObject's `objectIdentificatie`) from a value read off the API.
+  These fields are modelled polymorphically and have no generated typed setter; the helper accepts
+  the typed sub-DTO (reduced to its write-shape) or the raw array kept for an untyped subtype, so a
+  rol or zaakobject can be copied verbatim onto another resource without reaching for `->raw`.
 
 ## [1.1.0] - 2026-06-26
 
