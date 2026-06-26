@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data\Writes\Catalogi;
 
+use DateInterval;
 use DateTimeInterface;
 use Woweb\Zgw\Data\Values\Reference;
 use Woweb\Zgw\Data\Writes\WriteBuilder;
@@ -51,9 +52,9 @@ final class StatusTypeWrite extends WriteBuilder
         return $this->set('informeren', $value);
     }
 
-    public function doorlooptijd(?string $value): static
+    public function doorlooptijd(DateInterval|string|null $value): static
     {
-        return $this->set('doorlooptijd', $value);
+        return $this->set('doorlooptijd', $this->duration($value));
     }
 
     public function toelichting(?string $value): static

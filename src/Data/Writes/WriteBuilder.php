@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Data\Writes;
 
 use BackedEnum;
+use Carbon\CarbonInterval;
+use DateInterval;
 use DateTimeInterface;
 use Woweb\Zgw\Data\Data;
 use Woweb\Zgw\Data\Values\Reference;
@@ -72,6 +74,16 @@ abstract class WriteBuilder
     protected function enum(BackedEnum|string|int|null $value): string|int|null
     {
         return $value instanceof BackedEnum ? $value->value : $value;
+    }
+
+    /**
+     * Normalise a duration value to an ISO 8601 duration string (for example "P30D"), preserving
+     * null. This mirrors the read side, where a duration field hydrates into a CarbonInterval, so a
+     * read duration drops straight back into a write.
+     */
+    protected function duration(DateInterval|string|null $value): ?string
+    {
+        return $value instanceof DateInterval ? CarbonInterval::instance($value)->spec() : $value;
     }
 
     /**

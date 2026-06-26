@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Woweb\Zgw\Data\Writes\Catalogi;
 
+use DateInterval;
 use DateTimeInterface;
 use Woweb\Zgw\Data\Generated\Catalogi\Enums\Archiefnominatie;
 use Woweb\Zgw\Data\Values\Reference;
@@ -52,9 +53,9 @@ final class ResultaatTypeWrite extends WriteBuilder
         return $this->set('archiefnominatie', $this->enum($value));
     }
 
-    public function archiefactietermijn(?string $value): static
+    public function archiefactietermijn(DateInterval|string|null $value): static
     {
-        return $this->set('archiefactietermijn', $value);
+        return $this->set('archiefactietermijn', $this->duration($value));
     }
 
     /**
@@ -100,9 +101,9 @@ final class ResultaatTypeWrite extends WriteBuilder
         return $this->set('indicatieSpecifiek', $value);
     }
 
-    public function procestermijn(?string $value): static
+    public function procestermijn(DateInterval|string|null $value): static
     {
-        return $this->set('procestermijn', $value);
+        return $this->set('procestermijn', $this->duration($value));
     }
 
     /**

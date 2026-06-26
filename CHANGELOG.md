@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Duration write fields across the Catalogi write builders (a Zaaktype's `doorlooptijd`,
+  `servicenorm` and `verlengingstermijn`, a Resultaattype's `archiefactietermijn` and
+  `procestermijn`, a Besluittype's `publicatietermijn` and `reactietermijn`, a Statustype's
+  `doorlooptijd`) now accept a `DateInterval` and normalise it to its ISO 8601 string, mirroring the
+  `DurationCast` on the read side. A duration read from the API (a `CarbonInterval`) drops straight
+  back into a write without the caller formatting it by hand. A string is still accepted unchanged.
 - `Zgw::validate($name)` and `Zgw::validateAll()` validate a connection's configuration (secret
   strength, and that it is defined) without making any API call. Connections are built lazily, so a
   weak secret in an unused connection would otherwise surface only on first use; with one credential

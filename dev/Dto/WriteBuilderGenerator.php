@@ -216,6 +216,10 @@ final class WriteBuilderGenerator
             return ['param' => 'DateTimeInterface|string|null', 'expr' => '$this->dateTime($value)', 'imports' => ['DateTimeInterface']];
         }
 
+        if ($format === 'duration') {
+            return ['param' => 'DateInterval|string|null', 'expr' => '$this->duration($value)', 'imports' => ['DateInterval']];
+        }
+
         return match ($type) {
             'boolean' => ['param' => '?bool', 'expr' => '$value', 'imports' => []],
             'integer' => ['param' => '?int', 'expr' => '$value', 'imports' => []],
