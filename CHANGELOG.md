@@ -5,14 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-06-26
 
-### Fixed
+### Added
 
-- `Enkelvoudiginformatieobjecten::download()` now accepts query parameters, so a specific or
-  point-in-time version can be retrieved (`download($uuid, ['versie' => 2])`). The ZGW download
-  operation defines the `versie` and `registratieOp` query parameters, which the method previously
-  could not pass.
+- `Enkelvoudiginformatieobjecten::download()` now accepts an optional array of query parameters, so
+  a specific or point-in-time version of a document's content can be retrieved
+  (`download($uuid, ['versie' => 2])`). The ZGW download operation defines the `versie` and
+  `registratieOp` query parameters, which the method previously could not pass.
+
+### Documentation
+
+- A migration guide from the older `woweb/laravel-openzaak` package
+  (`docs/migrating-from-openzaak.md`), linked from the README.
+- README badges for the latest Packagist version, the minimum PHP version, the supported Laravel
+  versions and the PHPStan level.
+- Clarified that `show()`'s array argument is sent as the request's query parameters, so it carries
+  any parameter the operation supports (for example `versie`, `registratieOp` and `datumGeldigheid`),
+  not only `expand`. No signature change.
 
 ## [1.0.0] - 2026-06-25
 
