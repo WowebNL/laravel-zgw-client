@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   full static typing with no runtime change and no configuration on their side (the type travels in
   the published docblock). The mapping is generated from `TypedMap` by `composer dto:generate`, so it
   cannot drift, and is verified by `assertType` checks under PHPStan.
+- `Data\Values\Reference` now implements `JsonSerializable` and serialises to its bare URL string.
+  A `Reference` read from a DTO can be placed straight into a write payload: `json_encode($reference)`
+  yields the plain `"https://..."` link that ZGW expects, instead of a nested `{"url":...}` object.
 
 ## [1.1.0] - 2026-06-26
 
