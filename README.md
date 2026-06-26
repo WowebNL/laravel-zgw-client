@@ -1,9 +1,13 @@
 # Laravel ZGW client
 
+[![Latest version on Packagist](https://img.shields.io/packagist/v/woweb/laravel-zgw-client.svg)](https://packagist.org/packages/woweb/laravel-zgw-client)
+[![PHP version](https://img.shields.io/badge/PHP-8.2%2B-777BB4.svg?logo=php&logoColor=white)](https://www.php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-12%20%7C%2013-FF2D20.svg?logo=laravel&logoColor=white)](https://laravel.com/)
 [![Tests](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/ci.yml?branch=main&label=tests)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
 [![Contracts](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/contract.yml?branch=main&label=contracts)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/contract.yml)
 [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Michel-Verhoeven/1222acb05213ce4c584005c4364ecdf5/raw/laravel-zgw-apis-coverage.json)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
 [![Code style: Pint](https://img.shields.io/badge/code%20style-pint-orange.svg)](https://laravel.com/docs/pint)
+[![PHPStan level 8](https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?logo=php&logoColor=white)](phpstan.neon)
 [![License: EUPL-1.2](https://img.shields.io/badge/license-EUPL--1.2-blue.svg)](LICENSE.md)
 
 <!-- Coverage badge: the percentage is read from a secret Gist, updated by the coverage job on main.
