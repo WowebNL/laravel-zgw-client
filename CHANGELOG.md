@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- The audit trail is now typed. A generated `AuditTrailData` (in the `Woweb\Zgw\Data\Generated\Audittrail`
+  namespace, with a typed `bron` enum, an `aanmaakdatum` and the `wijzigingen` before and after)
+  hydrates the audit-trail entries of any resource that exposes one. `TypedEndpoint::audittrail()`
+  returns a `Collection<int, AuditTrailData>` and `audittrailItem()` a single `AuditTrailData`, so the
+  audit trail is no longer the one read that stayed an untyped array. The DTO is generated from the
+  spec and checked field by field by the contract suite, like the other read DTOs. The array API on
+  the endpoint (`->endpoint()->audittrail()`) is unchanged.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added

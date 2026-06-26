@@ -150,6 +150,23 @@ foreach ($rootsByComponent as $component => $schemas) {
     $total += count($generator->generate());
 }
 
+// Audit trail: a shared cross-component read with the same shape on every resource, so it gets one
+// DTO in its own Audittrail namespace rather than a per-component copy. The schema lives in the
+// zaken spec; the typed layer exposes it through TypedEndpoint::audittrail(), not the endpoint map.
+$auditGenerator = new DtoGenerator(
+    component: 'zaken',
+    rootSchemas: ['AuditTrail'],
+    namespace: $baseNamespace.'\\Audittrail',
+    outDir: $generatedDir.'/Audittrail',
+    opaque: $opaque,
+    valueObjects: $valueObjects,
+    discriminators: $discriminators,
+    baseNamespace: $baseNamespace,
+    rootSchemasByComponent: $rootSchemasByComponent,
+);
+
+$total += count($auditGenerator->generate());
+
 $mapGenerator = new TypedMapGenerator(
     endpointsDir: $root.'/src/Api/Endpoints',
     endpointNamespace: 'Woweb\\Zgw\\Api\\Endpoints',
