@@ -221,6 +221,36 @@ readonly class ZgwConnection
     }
 
     /**
+     * Verify the connection works end to end with a single lightweight read (the catalogi
+     * catalogussen list, page 1). The secret strength is already checked when the connection is
+     * built; this goes one step further and makes one real request, so it also catches a wrong base
+     * URL, an unreachable host or a credential the provider rejects. It throws the underlying error
+     * on failure, so the catalogi API must be configured and readable for this connection.
+     *
+     * @throws Throwable the underlying request error (for example an ApiRequestException on a 4xx
+     *                   or 5xx, or a connection error when the host is unreachable).
+     */
+    public function assertUsable(): void
+    {
+        $this->catalogi()->catalogussen()->index(['page' => 1])->first();
+    }
+
+    /**
+     * Whether {@see self::assertUsable()} succeeds, swallowing the error into a boolean. Useful for a
+     * health dashboard that lists connection status rather than failing hard.
+     */
+    public function isUsable(): bool
+    {
+        try {
+            $this->assertUsable();
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
      * Attach a middleware that emits a ZgwRequestSent event for every response received.
      *
      * The event is a seam for request-level audit logging; with no listeners it costs nothing.

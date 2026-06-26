@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `Zgw::validate($name)` and `Zgw::validateAll()` validate a connection's configuration (secret
+  strength, and that it is defined) without making any API call. Connections are built lazily, so a
+  weak secret in an unused connection would otherwise surface only on first use; with one credential
+  per municipality these let a deploy or boot check catch a bad credential for any connection up
+  front. `validateAll()` names the first connection that fails.
+- `ZgwConnection::assertUsable()` and `isUsable()` run a light read smoke-test (a catalogi
+  `catalogussen` list, page 1) to confirm a connection works end to end, so a wrong base URL, an
+  unreachable host or a credential the provider rejects is caught too. `assertUsable()` throws the
+  underlying error; `isUsable()` returns a boolean for a health dashboard.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added
