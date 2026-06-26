@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `Data\Values\Reference` now implements `JsonSerializable` and serialises to its bare URL string.
+  A `Reference` read from a DTO can be placed straight into a write payload: `json_encode($reference)`
+  yields the plain `"https://..."` link that ZGW expects, instead of a nested `{"url":...}` object.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added
