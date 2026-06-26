@@ -1,5 +1,8 @@
 # Laravel ZGW client
 
+[![Latest version on Packagist](https://img.shields.io/packagist/v/woweb/laravel-zgw-client.svg)](https://packagist.org/packages/woweb/laravel-zgw-client)
+[![PHP version](https://img.shields.io/badge/PHP-8.2%2B-777BB4.svg?logo=php&logoColor=white)](https://www.php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-12%20%7C%2013-FF2D20.svg?logo=laravel&logoColor=white)](https://laravel.com/)
 [![Tests](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/ci.yml?branch=main&label=tests)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
 [![Contracts](https://img.shields.io/github/actions/workflow/status/WowebNL/laravel-zgw-client/contract.yml?branch=main&label=contracts)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/contract.yml)
 [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Michel-Verhoeven/1222acb05213ce4c584005c4364ecdf5/raw/laravel-zgw-apis-coverage.json)](https://github.com/WowebNL/laravel-zgw-client/actions/workflows/ci.yml)
