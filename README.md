@@ -581,6 +581,16 @@ $zaak->_expand?->zaaktype?->identificatie;     // catalogi ZaakTypeData, typed
 $zaak->_expand?->rollen[0]?->betrokkeneIdentificatie; // recursively typed
 ```
 
+The audit trail is typed too. It has the same shape on every resource that exposes one, so it hydrates into a single shared `AuditTrailData` (with a typed `bron` enum, an `aanmaakdatum` and the `wijzigingen` before and after) rather than the resource's own DTO.
+
+```php
+$trail = Typed::wrap(Zgw::connection('main')->zaken()->zaken())->audittrail($uuid);
+
+$trail->first()?->actie;          // 'create', 'update', ...
+$trail->first()?->aanmaakdatum;   // CarbonImmutable|null
+$trail->first()?->wijzigingen?->nieuw; // the new state, or null
+```
+
 ## Events
 
 A `Woweb\Zgw\Events\ZgwRequestSent` event is dispatched after every request that receives a response. It carries the connection name, the `client_id`, the HTTP method, the request URI and the response status code. This is a seam for request-level audit logging (for example an ISO 27001 audit trail); with no listeners registered it costs nothing.

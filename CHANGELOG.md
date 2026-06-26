@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The audit trail is now typed. A generated `AuditTrailData` (in the `Woweb\Zgw\Data\Generated\Audittrail`
+  namespace, with a typed `bron` enum, an `aanmaakdatum` and the `wijzigingen` before and after)
+  hydrates the audit-trail entries of any resource that exposes one. `TypedEndpoint::audittrail()`
+  returns a `Collection<int, AuditTrailData>` and `audittrailItem()` a single `AuditTrailData`, so the
+  audit trail is no longer the one read that stayed an untyped array. The DTO is generated from the
+  spec and checked field by field by the contract suite, like the other read DTOs. The array API on
+  the endpoint (`->endpoint()->audittrail()`) is unchanged.
 - The base `Data` DTO now implements `Arrayable` and `JsonSerializable`. `$dto->toArray()` returns a
   ZGW-conformant array with the casts reversed (a `Reference` becomes its URL, a backed enum its
   value, a date or duration its ISO 8601 string, a nested DTO recurses), and `json_encode($dto)`
