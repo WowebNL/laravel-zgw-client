@@ -60,7 +60,7 @@
         ],
         "dto:generate": [
             "@php scripts/generate-dtos.php",
-            "@php vendor/bin/pint src/Data/Generated src/Data/Writes --quiet"
+            "@php vendor/bin/pint src/Data/Generated src/Data/Writes src/Data/Typed.php --quiet"
         ],
         "deptrac": "@php vendor/bin/deptrac analyse --no-progress"
     },
