@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The base `Data` DTO now implements `Arrayable` and `JsonSerializable`. `$dto->toArray()` returns a
+  ZGW-conformant array with the casts reversed (a `Reference` becomes its URL, a backed enum its
+  value, a date or duration its ISO 8601 string, a nested DTO recurses), and `json_encode($dto)`
+  yields the same structure. Date and date-time fields keep their original granularity, so a date
+  stays `Y-m-d`. Forward-compatible fields kept in `extra` are preserved, so a round-trip drops
+  nothing. A read DTO can now be reused in a write, cached or handed to Filament/Livewire without
+  reaching for `->raw`.
 - `Typed::wrap()` now carries a generated conditional return type, so the typed layer resolves to the
   concrete DTO. `Typed::wrap($conn->zaken()->zaken())->show($uuid)` statically resolves to `ZaakData`
   (and `->index()` to `LazyCollection<int, ZaakData>`) instead of the base `Data`, giving consumers
