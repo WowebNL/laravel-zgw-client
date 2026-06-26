@@ -81,6 +81,47 @@ abstract class Data implements Arrayable, JsonSerializable
     }
 
     /**
+     * The write-shape of this DTO: like toArray(), but limited to the fields that were actually
+     * present in the source response, so a value read from the API round-trips into a write
+     * identical to the source rather than emitting every declared field as null.
+     *
+     * This is the clean way to copy a polymorphic identification (a Rol's betrokkeneIdentificatie,
+     * a ZaakObject's objectIdentificatie) verbatim into a new write, without reaching for ->raw.
+     * Nested DTOs are write-shaped too.
+     *
+     * @return array<string, mixed>
+     */
+    public function toWriteArray(): array
+    {
+        $out = [];
+
+        foreach ((new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            if ($property->isStatic()) {
+                continue;
+            }
+
+            $name = $property->getName();
+
+            if ($name === 'extra' || $name === 'raw') {
+                continue;
+            }
+
+            // Only fields seen on the wire, so an absent field is left out rather than cleared.
+            if (! array_key_exists($name, $this->raw)) {
+                continue;
+            }
+
+            $out[$name] = self::normaliseForArray($property->getValue($this), $this->raw[$name], writeShape: true);
+        }
+
+        foreach ($this->extra as $key => $value) {
+            $out[$key] = $value;
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function jsonSerialize(): array
@@ -93,11 +134,13 @@ abstract class Data implements Arrayable, JsonSerializable
      *
      * @param  mixed  $rawHint  The original wire value for this field, used only to keep a date
      *                          field a date rather than promoting it to a date-time.
+     * @param  bool  $writeShape  When true a nested DTO is reduced to its write-shape (only the
+     *                            fields present in its source) rather than its full snapshot.
      */
-    private static function normaliseForArray(mixed $value, mixed $rawHint = null): mixed
+    private static function normaliseForArray(mixed $value, mixed $rawHint = null, bool $writeShape = false): mixed
     {
         if ($value instanceof self) {
-            return $value->toArray();
+            return $writeShape ? $value->toWriteArray() : $value->toArray();
         }
 
         if ($value instanceof Reference) {
@@ -125,7 +168,7 @@ abstract class Data implements Arrayable, JsonSerializable
         }
 
         if (is_array($value)) {
-            return array_map(static fn (mixed $item): mixed => self::normaliseForArray($item), $value);
+            return array_map(static fn (mixed $item): mixed => self::normaliseForArray($item, null, $writeShape), $value);
         }
 
         return $value;
