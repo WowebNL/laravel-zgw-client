@@ -25,6 +25,30 @@ final class OperationRegistry
     /** A syntactically valid dummy identifier accepted by AbstractEndpoint::encodeId(). */
     public const UUID = 'a1b2c3d4-0000-4000-8000-000000000000';
 
+    /**
+     * List endpoints the ZGW standard defines as a bare JSON array (relation resources), not a
+     * {count,next,previous,results} envelope. AbstractEndpoint::paginate() detects these and yields
+     * their items directly; the contract suite asserts the spec still shapes them as an array, so a
+     * future move to pagination surfaces as an intentional test break rather than a silent skip.
+     * Keyed as "{component} {base path}".
+     *
+     * @var list<string>
+     */
+    public const BARE_ARRAY_LISTS = [
+        'zaken /zaakinformatieobjecten',
+        'documenten /objectinformatieobjecten',
+        'documenten /gebruiksrechten',
+        'besluiten /besluitinformatieobjecten',
+    ];
+
+    /**
+     * Whether a list endpoint returns a bare JSON array instead of a paginated envelope.
+     */
+    public static function isBareArrayList(string $component, string $path): bool
+    {
+        return in_array("{$component} {$path}", self::BARE_ARRAY_LISTS, true);
+    }
+
     /** @var array<string, mixed> */
     private const BODY = ['foo' => 'bar'];
 
