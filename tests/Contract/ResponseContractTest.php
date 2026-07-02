@@ -62,6 +62,20 @@ final class ResponseContractTest extends ContractTestCase
             $this->markTestSkipped("Operation [{$key}] does not exist in ZGW {$release}.");
         }
 
+        if ($kind === 'list' && OperationRegistry::isBareArrayList($component, $path)) {
+            // A ZGW relation resource (e.g. zaakinformatieobjecten): the standard defines the list
+            // response as a bare JSON array, not a {count,next,previous,results} envelope, and it
+            // carries no `page` parameter. AbstractEndpoint::paginate() yields these items directly.
+            // Assert the spec still shapes it as an array so a future move to pagination breaks here.
+            $this->assertTrue(
+                $spec->successResponseIsArray($path, $method),
+                "Bare-array list [{$key}] is no longer a bare array in ZGW {$release}; it may now be paginated."
+            );
+            $this->assertNotContains('page', $spec->parameterNames($path, $method), "Bare-array list [{$key}] unexpectedly declares a `page` query parameter in ZGW {$release}.");
+
+            return;
+        }
+
         $properties = $spec->successResponseProperties($path, $method);
 
         if ($properties === null) {
@@ -113,6 +127,39 @@ final class ResponseContractTest extends ContractTestCase
 
         $this->assertCount(1, $result);
         $this->assertSame(OperationRegistry::UUID, $result->first()['uuid'], 'Client did not derive the UUID from the resource url.');
+    }
+
+    /**
+     * Round-trip for the non-paginated relation resources: feed a spec-shaped bare JSON array
+     * through the client and confirm it yields the items and still derives the UUID from `url`.
+     * This exercises the `array_is_list()` branch of AbstractEndpoint::paginate() against the shape
+     * the specs actually define for these endpoints.
+     *
+     * @return iterable<string, array{0: string, 1: callable}>
+     */
+    public static function bareArrayParsingProvider(): iterable
+    {
+        yield 'zaakinformatieobjecten' => ['https://zaken.example.com/zaken/api/v1/zaakinformatieobjecten', static fn () => Zgw::connection('main')->zaken()->zaakinformatieobjecten()->index()];
+        yield 'objectinformatieobjecten' => ['https://documenten.example.com/documenten/api/v1/objectinformatieobjecten', static fn () => Zgw::connection('main')->documenten()->objectinformatieobjecten()->index()];
+        yield 'gebruiksrechten' => ['https://documenten.example.com/documenten/api/v1/gebruiksrechten', static fn () => Zgw::connection('main')->documenten()->gebruiksrechten()->index()];
+        yield 'besluitinformatieobjecten' => ['https://besluiten.example.com/besluiten/api/v1/besluitinformatieobjecten', static fn () => Zgw::connection('main')->besluiten()->besluitinformatieobjecten()->index()];
+    }
+
+    #[DataProvider('bareArrayParsingProvider')]
+    public function test_client_parses_spec_shaped_bare_array(string $url, callable $invoke): void
+    {
+        $resourceUrl = $url.'/'.OperationRegistry::UUID;
+
+        Http::fake([
+            $url => Http::response([
+                ['url' => $resourceUrl, 'informatieobject' => 'https://documenten.example.com/documenten/api/v1/enkelvoudiginformatieobjecten/x'],
+            ]),
+        ]);
+
+        $result = $invoke();
+
+        $this->assertCount(1, $result);
+        $this->assertSame(OperationRegistry::UUID, $result->first()['uuid'], 'Client did not derive the UUID from a bare-array item url.');
     }
 
     private function concretePath(string $template): string

@@ -150,6 +150,55 @@ final class SpecModel
      */
     public function successResponseProperties(string $path, string $method): ?array
     {
+        $schema = $this->successResponseSchema($path, $method);
+
+        if ($schema === null) {
+            return null;
+        }
+
+        $properties = $this->schemaProperties($schema);
+
+        return $properties === [] ? null : $properties;
+    }
+
+    /**
+     * Whether the success (2xx) response body is a bare JSON array (`type: array`) rather than an
+     * object envelope.
+     *
+     * Most ZGW list endpoints return a paginated `{count,next,previous,results}` envelope, but the
+     * standard defines a handful of relation resources (zaakinformatieobjecten,
+     * objectinformatieobjecten, besluitinformatieobjecten, gebruiksrechten) as a bare array with no
+     * pagination. Returns true for a bare array, false for an object schema, and null when there is
+     * no JSON success response or the schema sits behind an unresolvable external reference.
+     */
+    public function successResponseIsArray(string $path, string $method): ?bool
+    {
+        $schema = $this->successResponseSchema($path, $method);
+
+        if ($schema === null) {
+            return null;
+        }
+
+        if (isset($schema['$ref'])) {
+            $schema = $this->resolveInternalRef((string) $schema['$ref']);
+
+            if ($schema === null) {
+                // External $ref that cannot be resolved from the local fixture; shape is unknown.
+                return null;
+            }
+        }
+
+        return ($schema['type'] ?? null) === 'array';
+    }
+
+    /**
+     * The success (2xx) JSON response body schema for an operation, or null when there is no JSON
+     * success response.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function successResponseSchema(string $path, string $method): ?array
+    {
         $operation = $this->operation($path, $method);
         $responses = $operation['responses'] ?? [];
 
@@ -179,9 +228,7 @@ final class SpecModel
             return null;
         }
 
-        $properties = $this->schemaProperties($media['schema']);
-
-        return $properties === [] ? null : $properties;
+        return $media['schema'];
     }
 
     /**
