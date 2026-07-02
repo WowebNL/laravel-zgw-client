@@ -171,6 +171,18 @@ abstract class AbstractEndpoint
     {
         return LazyCollection::make(function () use ($url, $params): Generator {
             $response = $this->zgwResponse->validate($this->connection->request()->get($url, $params));
+
+            // Some ZGW list endpoints (e.g. zaakinformatieobjecten,
+            // objectinformatieobjecten, besluitinformatieobjecten) are not
+            // paginated and return a bare JSON array instead of a
+            // {count,next,previous,results} envelope. Yield those items directly;
+            // there is no `next` to follow.
+            if (array_is_list($response)) {
+                yield from $this->mapResults($response);
+
+                return;
+            }
+
             yield from $this->mapResults($response['results'] ?? []);
 
             $maxPages = $this->connection->getMaxPages();

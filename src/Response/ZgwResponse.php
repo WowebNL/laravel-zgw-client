@@ -13,7 +13,10 @@ class ZgwResponse
     /**
      * Validate a standard JSON response and return its decoded body.
      *
-     * @return array<string, mixed>
+     * The body is usually a paginated envelope (string-keyed), but some ZGW list
+     * endpoints return a bare JSON array (int-keyed), so the key type is mixed.
+     *
+     * @return array<array-key, mixed>
      *
      * @throws ApiRequestException
      */

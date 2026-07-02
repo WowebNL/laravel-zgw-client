@@ -74,4 +74,36 @@ class LazyPaginationTest extends TestCase
         $this->assertSame(['p1'], array_column($first, 'uuid'));
         Http::assertSentCount(1);
     }
+
+    public function test_index_reads_a_bare_array_from_a_non_paginated_endpoint(): void
+    {
+        // zaakinformatieobjecten is not paginated: the ZGW Zaken API returns a bare
+        // JSON array, not a {count,next,previous,results} envelope.
+        Http::fake([
+            self::BASE.'zaakinformatieobjecten*' => Http::response([
+                ['url' => self::BASE.'zaakinformatieobjecten/a', 'informatieobject' => 'https://documenten.example.com/io/a'],
+                ['url' => self::BASE.'zaakinformatieobjecten/b', 'informatieobject' => 'https://documenten.example.com/io/b'],
+            ]),
+        ]);
+
+        $items = Zgw::connection('main')->zaken()->zaakinformatieobjecten()
+            ->index(['zaak' => self::BASE.'zaken/1'])->all();
+
+        $this->assertCount(2, $items);
+        $this->assertSame('https://documenten.example.com/io/a', $items[0]['informatieobject']);
+        // uuid is still derived from the url segment, as for paginated items.
+        $this->assertSame('a', $items[0]['uuid']);
+    }
+
+    public function test_index_returns_empty_for_an_empty_bare_array(): void
+    {
+        Http::fake([
+            self::BASE.'zaakinformatieobjecten*' => Http::response([]),
+        ]);
+
+        $items = Zgw::connection('main')->zaken()->zaakinformatieobjecten()
+            ->index(['zaak' => self::BASE.'zaken/1'])->all();
+
+        $this->assertSame([], $items);
+    }
 }
