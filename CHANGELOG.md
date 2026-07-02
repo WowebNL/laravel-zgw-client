@@ -57,6 +57,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A `Reference` read from a DTO can be placed straight into a write payload: `json_encode($reference)`
   yields the plain `"https://..."` link that ZGW expects, instead of a nested `{"url":...}` object.
 
+### Fixed
+
+- `index()` on the non-paginated relation resources (`zaakinformatieobjecten`,
+  `objectinformatieobjecten`, `besluitinformatieobjecten`, `gebruiksrechten`) now returns their items.
+  The ZGW standard defines these list endpoints as a bare JSON array rather than a
+  `{count,next,previous,results}` envelope, and `AbstractEndpoint::paginate()` only read the `results`
+  key, so it silently yielded nothing (a zaak's linked documents could never be listed, for example).
+  The paginator now detects a bare-array response and yields those items directly. Envelope responses
+  are unchanged. The contract suite asserts, against the real specs across every supported release,
+  that these endpoints stay a bare array, so a future move to pagination surfaces as a deliberate test
+  break instead of a silent regression.
+
 ## [1.1.0] - 2026-06-26
 
 ### Added
