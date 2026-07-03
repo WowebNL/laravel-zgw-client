@@ -77,6 +77,10 @@ class Enkelvoudiginformatieobjecten extends AbstractEndpoint implements CreatesR
      * Accepts the query parameters the standard defines for this operation, in particular `versie`
      * and `registratieOp` to retrieve a specific or point-in-time version of the content.
      *
+     * The connection sends `Accept: application/json` on every request, but this endpoint returns
+     * the raw file content, so that Accept is replaced with a wildcard that permits any media type.
+     * Otherwise the server cannot satisfy the requested media type and responds `406 Not Acceptable`.
+     *
      * @param  array<string, mixed>  $params  Optional query parameters (for example `versie`).
      *
      * @throws ApiRequestException
@@ -86,7 +90,9 @@ class Enkelvoudiginformatieobjecten extends AbstractEndpoint implements CreatesR
         $this->assertSupported('GET', $this->itemTemplate().'/download');
 
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/download';
-        $response = $this->connection->request()->get($url, $params);
+        $response = $this->connection->request()
+            ->replaceHeaders(['Accept' => '*/*'])
+            ->get($url, $params);
 
         if ($response->failed()) {
             throw new ApiRequestException(

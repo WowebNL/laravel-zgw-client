@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `Enkelvoudiginformatieobjecten::download()` now sends a wildcard `Accept` header instead of
+  inheriting the connection-wide `Accept: application/json`. The download endpoint returns the raw
+  file content, so restricting Accept to JSON made the server unable to satisfy the requested media
+  type and respond `406 Not Acceptable`, breaking every document download. Other requests keep
+  sending `Accept: application/json`.
 - `index()` on the non-paginated relation resources (`zaakinformatieobjecten`,
   `objectinformatieobjecten`, `besluitinformatieobjecten`, `gebruiksrechten`) now returns their items.
   The ZGW standard defines these list endpoints as a bare JSON array rather than a
