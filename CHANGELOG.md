@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.1] - 2026-07-02
+## [1.2.2] - 2026-07-03
 
 ### Fixed
 
@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file content, so restricting Accept to JSON made the server unable to satisfy the requested media
   type and respond `406 Not Acceptable`, breaking every document download. Other requests keep
   sending `Accept: application/json`.
+
+## [1.2.1] - 2026-07-02
+
+### Fixed
+
 - `index()` on the non-paginated relation resources (`zaakinformatieobjecten`,
   `objectinformatieobjecten`, `besluitinformatieobjecten`, `gebruiksrechten`) now returns their items.
   The ZGW standard defines these list endpoints as a bare JSON array rather than a
