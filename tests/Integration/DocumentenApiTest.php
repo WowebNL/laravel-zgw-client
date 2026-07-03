@@ -136,4 +136,22 @@ class DocumentenApiTest extends TestCase
         $this->assertSame('VERSION-2-BYTES', $content);
         Http::assertSent(fn ($request) => str_contains($request->url(), 'versie=2'));
     }
+
+    public function test_download_accepts_any_media_type_not_only_json(): void
+    {
+        $uuid = 'doc-uuid';
+
+        Http::fake([
+            self::BASE.'enkelvoudiginformatieobjecten/'.$uuid.'/download' => Http::response('PDF-BYTES'),
+        ]);
+
+        Zgw::connection('main')
+            ->documenten()
+            ->enkelvoudiginformatieobjecten()
+            ->download($uuid);
+
+        // The binary download endpoint returns raw file content, so the request must not restrict
+        // Accept to application/json; otherwise the server responds 406 Not Acceptable.
+        Http::assertSent(fn ($request) => $request->header('Accept') === ['*/*']);
+    }
 }
