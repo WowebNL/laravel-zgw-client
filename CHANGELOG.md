@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `Enkelvoudiginformatieobjecten::lock()` and the `publish()` action on `Zaaktypen`,
+  `Besluittypen` and `Informatieobjecttypen` now send their POST request without a body. They
+  previously sent Laravel's default empty-array data, which serializes to a JSON list (`[]`),
+  making Open Zaak reject every attempt with a 400 "Ongeldige data. Verwacht een dictionary, kreeg
+  een list." For lock this broke any flow that updates a document (such as uploading a new
+  version). The ZGW standard defines these operations without a request body, with only a
+  mandatory `Content-Type: application/json` header, which is still sent.
+
 ## [1.2.2] - 2026-07-03
 
 ### Fixed

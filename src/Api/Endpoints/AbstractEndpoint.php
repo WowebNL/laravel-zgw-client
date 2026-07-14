@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Woweb\Zgw\Api\Endpoints;
 
 use Generator;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\LazyCollection;
@@ -249,6 +250,20 @@ abstract class AbstractEndpoint
         $response = $this->connection->request()->get($url, $params);
 
         return $this->zgwResponse->validate($response);
+    }
+
+    /**
+     * POST to an action endpoint that the ZGW spec defines without a request body (such as
+     * lock and publish), while still sending the mandatory Content-Type: application/json header.
+     *
+     * post() cannot be used for these: it would attach its default empty-array data as a JSON
+     * list ("[]"), which Open Zaak rejects with a 400 "Verwacht een dictionary, kreeg een list".
+     */
+    protected function postWithoutBody(string $url): Response
+    {
+        return $this->connection->request()
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->send('POST', $url);
     }
 
     /**

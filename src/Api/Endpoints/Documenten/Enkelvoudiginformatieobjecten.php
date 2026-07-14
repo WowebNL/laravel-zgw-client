@@ -48,9 +48,8 @@ class Enkelvoudiginformatieobjecten extends AbstractEndpoint implements CreatesR
     public function lock(string $uuid): string
     {
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/lock';
-        $response = $this->connection->request()->post($url);
 
-        return $this->zgwResponse->validate($response)['lock'] ?? '';
+        return $this->zgwResponse->validate($this->postWithoutBody($url))['lock'] ?? '';
     }
 
     /**

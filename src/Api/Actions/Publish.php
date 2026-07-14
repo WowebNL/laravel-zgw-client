@@ -22,6 +22,6 @@ trait Publish
 
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/publish';
 
-        return $this->zgwResponse->validate($this->connection->request()->post($url));
+        return $this->zgwResponse->validate($this->postWithoutBody($url));
     }
 }
