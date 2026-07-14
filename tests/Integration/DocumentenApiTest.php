@@ -68,6 +68,29 @@ class DocumentenApiTest extends TestCase
         $this->assertSame($lockString, $result);
     }
 
+    public function test_lock_sends_no_request_body(): void
+    {
+        $uuid = 'doc-uuid';
+
+        Http::fake([
+            self::BASE.'enkelvoudiginformatieobjecten/'.$uuid.'/lock' => Http::response([
+                'lock' => 'lock-abc-123',
+            ]),
+        ]);
+
+        Zgw::connection('main')
+            ->documenten()
+            ->enkelvoudiginformatieobjecten()
+            ->lock($uuid);
+
+        // The spec defines no request body for the lock operation, but does require a
+        // Content-Type: application/json header. A JSON list body ("[]") makes Open Zaak
+        // respond 400 "Verwacht een dictionary, kreeg een list".
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->body() === ''
+            && $request->hasHeader('Content-Type', 'application/json'));
+    }
+
     public function test_unlock_returns_null_on_no_content(): void
     {
         $uuid = 'doc-uuid';
