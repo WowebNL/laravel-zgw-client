@@ -51,4 +51,27 @@ class CatalogiApiTest extends TestCase
         $this->assertCount(2, $zaaktypen);
         $this->assertSame('zt-1', $zaaktypen->first()['uuid']);
     }
+
+    public function test_publish_sends_no_request_body(): void
+    {
+        $uuid = 'zt-1';
+
+        Http::fake([
+            self::BASE.'zaaktypen/'.$uuid.'/publish' => Http::response([
+                'uuid' => $uuid,
+                'concept' => false,
+            ]),
+        ]);
+
+        $zaaktype = Zgw::connection('main')->catalogi()->zaaktypen()->publish($uuid);
+
+        $this->assertFalse($zaaktype['concept']);
+
+        // The spec defines no request body for the publish operations, but does require a
+        // Content-Type: application/json header. A JSON list body ("[]") makes Open Zaak
+        // respond 400 "Verwacht een dictionary, kreeg een list".
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->body() === ''
+            && $request->hasHeader('Content-Type', 'application/json'));
+    }
 }

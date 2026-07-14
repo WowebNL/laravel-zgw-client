@@ -49,15 +49,7 @@ class Enkelvoudiginformatieobjecten extends AbstractEndpoint implements CreatesR
     {
         $url = $this->baseUrl.$this->endpoint.'/'.$this->encodeId($uuid).'/lock';
 
-        // The ZGW spec defines this operation without a request body but with a mandatory
-        // Content-Type: application/json header. post() cannot be used here: it would attach
-        // its default empty-array data as a JSON list ("[]"), which Open Zaak rejects with a
-        // 400 "Verwacht een dictionary, kreeg een list".
-        $response = $this->connection->request()
-            ->withHeaders(['Content-Type' => 'application/json'])
-            ->send('POST', $url);
-
-        return $this->zgwResponse->validate($response)['lock'] ?? '';
+        return $this->zgwResponse->validate($this->postWithoutBody($url))['lock'] ?? '';
     }
 
     /**
