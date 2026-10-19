@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-19
+
+### Added
+
+- `DirectEndpoint::getRawByUrl($url)` returns the raw response body of a URL byte for byte, for
+  example the `inhoud` link of a document, so binary content can be fetched straight from a link
+  the API returned. Like `getByUrl()` it checks the URL against the connection allowlist before
+  any request is sent, and it throws an `ApiRequestException` on a 4xx or 5xx response, so an
+  error page is never returned as content. It sends a wildcard `Accept` header, as `download()`
+  does, to avoid a `406 Not Acceptable`.
+- `ZgwConnection::direct()` returns a `DirectEndpoint` for the connection, so a URL can be fetched
+  with `Zgw::connection('main')->direct()->getByUrl($url)` instead of constructing the endpoint
+  by hand.
+
+### Changed
+
+- `DirectEndpoint::getByUrl()` now adds a `uuid` derived from the resource's `url` field when the
+  response has none, the same way `index()` already does for list items. A `uuid` returned by the
+  API is left unchanged.
+
+### Fixed
+
+- The migration guide promised a `getRaw` replacement on `DirectEndpoint` that did not exist. It
+  now documents `getRawByUrl()` and the `direct()` shortcut, and notes that the old
+  `getCached($url)` helper has no direct replacement.
+
 ## [1.2.3] - 2026-07-14
 
 ### Fixed

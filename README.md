@@ -383,16 +383,21 @@ Zgw::connection('secondary')->documenten()->enkelvoudiginformatieobjecten()->ind
 
 ### Resolving resources by URL
 
-ZGW responses contain hyperlinks to related resources. `DirectEndpoint` fetches such a URL directly.
+ZGW responses contain hyperlinks to related resources. `direct()` on a connection returns a `DirectEndpoint` that fetches such a URL directly.
 
 ```php
-use Woweb\Zgw\Api\Endpoints\DirectEndpoint;
+$direct = Zgw::connection('main')->direct();
 
-$connection = Zgw::connection('main');
-$resource = (new DirectEndpoint($connection))->getByUrl('https://openzaak.example.com/zaken/api/v1/zaken/uuid');
+// Decoded JSON resource, as an array
+$resource = $direct->getByUrl('https://openzaak.example.com/zaken/api/v1/zaken/uuid');
+
+// Raw response body, for example the `inhoud` link of a document
+$bytes = $direct->getRawByUrl($document['inhoud']);
 ```
 
-The target URL must resolve to a trusted origin, otherwise a `DisallowedHostException` is thrown. See [Host allowlist](#host-allowlist).
+`getByUrl()` adds a `uuid` derived from the resource's `url` field when the response has none, the same way `index()` does for list items. `getRawByUrl()` returns the body byte for byte (binary content included) and sends a wildcard `Accept` header. Both throw an `ApiRequestException` on a 4xx or 5xx response, so an error page is never returned as content.
+
+The target URL must resolve to a trusted origin, otherwise a `DisallowedHostException` is thrown before any request is sent. See [Host allowlist](#host-allowlist).
 
 ## Caching
 
@@ -457,7 +462,7 @@ Zgw::connection('gemeente-x')->isUsable();     // the same as a boolean, for a h
 
 ### Host allowlist
 
-When `index()` follows a `next` link, or when you call `DirectEndpoint::getByUrl()`, the package only sends the bearer token to a trusted origin. Trusted origins are the configured base URLs of the connection plus anything in `allowed_hosts`. A request to any other origin throws `DisallowedHostException` before the token leaves your application. This prevents a tampered or unexpected response from redirecting your credential to an untrusted host. If your provider legitimately returns links to a different host (for example a separate document download domain), add that origin to `allowed_hosts` (a full URL or a bare host, which is treated as https).
+When `index()` follows a `next` link, or when you call `DirectEndpoint::getByUrl()` or `DirectEndpoint::getRawByUrl()`, the package only sends the bearer token to a trusted origin. Trusted origins are the configured base URLs of the connection plus anything in `allowed_hosts`. A request to any other origin throws `DisallowedHostException` before the token leaves your application. This prevents a tampered or unexpected response from redirecting your credential to an untrusted host. If your provider legitimately returns links to a different host (for example a separate document download domain), add that origin to `allowed_hosts` (a full URL or a bare host, which is treated as https).
 
 ### Timeouts
 
