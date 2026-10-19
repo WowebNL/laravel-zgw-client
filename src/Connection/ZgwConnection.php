@@ -17,6 +17,7 @@ use Woweb\Zgw\Api\AutorisatiesApi;
 use Woweb\Zgw\Api\BesluitenApi;
 use Woweb\Zgw\Api\CatalogiApi;
 use Woweb\Zgw\Api\DocumentenApi;
+use Woweb\Zgw\Api\Endpoints\DirectEndpoint;
 use Woweb\Zgw\Api\NotificatiesApi;
 use Woweb\Zgw\Api\ZakenApi;
 use Woweb\Zgw\Auth\ClientSecretValidator;
@@ -451,6 +452,15 @@ readonly class ZgwConnection
     public function getCacheNamespace(): string
     {
         return (string) ($this->config['client_id'] ?? '');
+    }
+
+    /**
+     * Fetch resources or raw content by a full URL, such as a hyperlink from an API response.
+     * The URL must be on this connection's allowlist.
+     */
+    public function direct(): DirectEndpoint
+    {
+        return new DirectEndpoint($this);
     }
 
     public function zaken(): ZakenApi
