@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Redirects are now checked against the connection allowlist on every hop. A redirect to an
+  origin outside the allowlist throws a `DisallowedHostException` instead of being followed, and
+  that exception is never retried. Redirects within the allowlist are still followed. This applies
+  to every request, including `getByUrl()`, `getRawByUrl()` and pagination `next` links. If your
+  provider legitimately redirects to another host (for example a separate download host), add that
+  origin to `allowed_hosts`.
 - The migration guide promised a `getRaw` replacement on `DirectEndpoint` that did not exist. It
   now documents `getRawByUrl()` and the `direct()` shortcut, and notes that the old
   `getCached($url)` helper has no direct replacement.

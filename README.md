@@ -462,7 +462,7 @@ Zgw::connection('gemeente-x')->isUsable();     // the same as a boolean, for a h
 
 ### Host allowlist
 
-When `index()` follows a `next` link, or when you call `DirectEndpoint::getByUrl()` or `DirectEndpoint::getRawByUrl()`, the package only sends the bearer token to a trusted origin. Trusted origins are the configured base URLs of the connection plus anything in `allowed_hosts`. A request to any other origin throws `DisallowedHostException` before the token leaves your application. This prevents a tampered or unexpected response from redirecting your credential to an untrusted host. If your provider legitimately returns links to a different host (for example a separate document download domain), add that origin to `allowed_hosts` (a full URL or a bare host, which is treated as https).
+When `index()` follows a `next` link, or when you call `DirectEndpoint::getByUrl()` or `DirectEndpoint::getRawByUrl()`, the package only sends the bearer token to a trusted origin. Trusted origins are the configured base URLs of the connection plus anything in `allowed_hosts`. A request to any other origin throws `DisallowedHostException` before the token leaves your application. Redirects are followed only within the allowlist; each hop is checked the same way, and a refused hop is never retried. This prevents a tampered or unexpected response from redirecting your credential to an untrusted host. If your provider legitimately returns links to a different host (for example a separate document download domain), add that origin to `allowed_hosts` (a full URL or a bare host, which is treated as https).
 
 ### Timeouts
 
@@ -527,7 +527,7 @@ All exceptions extend `Woweb\Zgw\Exceptions\ZgwException`, so you can catch the 
 | `WeakSecretException` | The `client_secret` does not meet the configured strength rules. |
 | `InvalidConfigurationException` | A connection or a base URL is not configured, or the `version` is not a supported ZGW release. |
 | `UnsupportedOperationException` | An operation was called that the connection's targeted ZGW release does not define. |
-| `DisallowedHostException` | A `next` link or direct URL targets an origin that is not on the allowlist. |
+| `DisallowedHostException` | A `next` link, direct URL or redirect hop targets an origin that is not on the allowlist. |
 | `PaginationLimitException` | Auto-pagination exceeded `max_pages`. |
 | `InvalidIdentifierException` | A resource identifier contained characters that are not allowed in a URL segment. |
 

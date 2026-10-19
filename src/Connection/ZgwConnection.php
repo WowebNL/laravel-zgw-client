@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 use Throwable;
 use Woweb\Zgw\Api\AutorisatiesApi;
 use Woweb\Zgw\Api\BesluitenApi;
@@ -203,14 +204,39 @@ readonly class ZgwConnection
      *
      * Every request carries the authorization headers and the configured connect/request
      * timeouts, so no call site can accidentally issue an unauthenticated or unbounded request.
+     *
+     * Redirects are followed only within the allowlist: each hop is checked with
+     * {@see self::assertUrlAllowed()} before it is requested, so a redirect cannot carry a
+     * request to an origin that the initial URL check would have refused.
      */
     public function request(): PendingRequest
     {
         $request = Http::withHeaders($this->getHeaders())
             ->connectTimeout($this->getConnectTimeout())
-            ->timeout($this->getTimeout());
+            ->timeout($this->getTimeout())
+            ->withOptions(['allow_redirects' => $this->redirectPolicy()]);
 
         return $this->applyRetry($this->withAuditTrail($request));
+    }
+
+    /**
+     * Guzzle redirect options: the library defaults, plus a check of every hop against the
+     * connection allowlist. A disallowed hop throws a DisallowedHostException before it is sent.
+     *
+     * @return array<string, mixed>
+     */
+    private function redirectPolicy(): array
+    {
+        return [
+            'max' => 5,
+            'strict' => false,
+            'referer' => false,
+            'protocols' => ['http', 'https'],
+            'track_redirects' => false,
+            'on_redirect' => function (RequestInterface $request, ResponseInterface $response, UriInterface $uri): void {
+                $this->assertUrlAllowed((string) $uri);
+            },
+        ];
     }
 
     /**
@@ -310,12 +336,17 @@ readonly class ZgwConnection
      *
      * Only idempotent methods (GET, HEAD, PUT, DELETE) are eligible, so a create or update is
      * never silently repeated. A missing status (a connection-level error) is treated as transient.
+     * A refused redirect (DisallowedHostException) is a permanent refusal and is never retried.
      *
      * @return callable(Throwable, PendingRequest, ?string): bool
      */
     private function retryDecisionCallback(): callable
     {
         return function (Throwable $exception, PendingRequest $request, ?string $method): bool {
+            if ($exception instanceof DisallowedHostException) {
+                return false;
+            }
+
             if (! in_array(strtoupper((string) $method), ['GET', 'HEAD', 'PUT', 'DELETE'], true)) {
                 return false;
             }

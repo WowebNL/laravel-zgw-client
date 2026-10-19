@@ -158,7 +158,7 @@ $resource = $direct->getByUrl('https://openzaak.example.com/zaken/api/v1/zaken/u
 $bytes = $direct->getRawByUrl($document['inhoud']);                                   // was getRaw($url)
 ```
 
-The target URL must resolve to a trusted origin (the configured base URLs plus any `allowed_hosts`), otherwise a `DisallowedHostException` is thrown before any request is sent. This host allowlisting is new and is on by default.
+The target URL must resolve to a trusted origin (the configured base URLs plus any `allowed_hosts`), otherwise a `DisallowedHostException` is thrown before any request is sent. Redirects are followed only within the allowlist, with each hop checked the same way. This host allowlisting is new and is on by default.
 
 Two behaviour differences to check at call sites:
 

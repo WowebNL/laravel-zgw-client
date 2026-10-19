@@ -11,8 +11,8 @@ use Woweb\Zgw\Exceptions\DisallowedHostException;
  * Resolves a resource directly by its full URL rather than via apiName/endpoint.
  * Used for following hyperlinks returned in API responses.
  *
- * Every URL is checked against the connection allowlist before a request is sent, so the
- * bearer token never leaves for an untrusted origin.
+ * Every URL, and every redirect hop, is checked against the connection allowlist before a
+ * request is sent to it, so no request goes to an untrusted origin.
  */
 class DirectEndpoint extends AbstractEndpoint
 {
@@ -24,7 +24,7 @@ class DirectEndpoint extends AbstractEndpoint
      *
      * @return array<string, mixed>
      *
-     * @throws DisallowedHostException when the URL is not on the connection allowlist.
+     * @throws DisallowedHostException when the URL, or a redirect hop, is not on the connection allowlist.
      * @throws ApiRequestException on a 4xx or 5xx response.
      */
     public function getByUrl(string $url): array
@@ -43,7 +43,7 @@ class DirectEndpoint extends AbstractEndpoint
      * `Accept: application/json` on every request; this request replaces it with a wildcard so
      * a server that returns file content does not respond `406 Not Acceptable`.
      *
-     * @throws DisallowedHostException when the URL is not on the connection allowlist.
+     * @throws DisallowedHostException when the URL, or a redirect hop, is not on the connection allowlist.
      * @throws ApiRequestException on a 4xx or 5xx response, so an error page is never returned
      *                             as content.
      */
