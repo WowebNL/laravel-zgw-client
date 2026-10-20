@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   items of the last page remained. The collection is now keyed sequentially across pages.
   Iterating with `foreach`, `each()` or `take()` already saw every item and still streams page by
   page; the only difference there is that the keys no longer restart at 0 on each page.
+  Results cached with `cache($ttl)` by an earlier version still hold the truncated list; clear
+  those entries after upgrading or let them expire.
 
 ## [1.2.3] - 2026-07-14
 
