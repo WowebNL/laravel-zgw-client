@@ -223,12 +223,23 @@ abstract class AbstractEndpoint
     private function mapResults(array $results): Generator
     {
         foreach ($results as $item) {
-            if (! isset($item['uuid']) && isset($item['url'])) {
-                $item['uuid'] = substr($item['url'], strrpos($item['url'], '/') + 1);
-            }
-
-            yield $item;
+            yield $this->withDerivedUuid($item);
         }
+    }
+
+    /**
+     * Add a `uuid` derived from the last path segment of the `url` field when the item has none.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    protected function withDerivedUuid(array $item): array
+    {
+        if (! isset($item['uuid']) && isset($item['url']) && is_string($item['url'])) {
+            $item['uuid'] = substr($item['url'], strrpos($item['url'], '/') + 1);
+        }
+
+        return $item;
     }
 
     /**
@@ -283,13 +294,7 @@ abstract class AbstractEndpoint
      */
     protected function createCollection(array $results): Collection
     {
-        return collect($results)->map(function (array $item): array {
-            if (! isset($item['uuid']) && isset($item['url'])) {
-                $item['uuid'] = substr($item['url'], strrpos($item['url'], '/') + 1);
-            }
-
-            return $item;
-        });
+        return collect($results)->map(fn (array $item): array => $this->withDerivedUuid($item));
     }
 
     /**

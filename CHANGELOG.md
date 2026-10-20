@@ -7,14 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-19
+
+### Added
+
+- `DirectEndpoint::getRawByUrl($url)` returns the raw response body of a URL byte for byte, for
+  example the `inhoud` link of a document, so binary content can be fetched straight from a link
+  the API returned. Like `getByUrl()` it checks the URL against the connection allowlist before
+  any request is sent, and it throws an `ApiRequestException` on a 4xx or 5xx response, so an
+  error page is never returned as content. It sends a wildcard `Accept` header, as `download()`
+  does, to avoid a `406 Not Acceptable`.
+- `ZgwConnection::direct()` returns a `DirectEndpoint` for the connection, so a URL can be fetched
+  with `Zgw::connection('main')->direct()->getByUrl($url)` instead of constructing the endpoint
+  by hand.
+
+### Changed
+
+- `DirectEndpoint::getByUrl()` now adds a `uuid` derived from the resource's `url` field when the
+  response has none, the same way `index()` already does for list items. A `uuid` returned by the
+  API is left unchanged.
+
 ### Fixed
 
+- Redirects are now checked against the connection allowlist on every hop. A redirect to an
+  origin outside the allowlist throws a `DisallowedHostException` instead of being followed, and
+  that exception is never retried. Redirects within the allowlist are still followed. This applies
+  to every request, including `getByUrl()`, `getRawByUrl()` and pagination `next` links. If your
+  provider legitimately redirects to another host (for example a separate download host), add that
+  origin to `allowed_hosts`.
+- The migration guide promised a `getRaw` replacement on `DirectEndpoint` that did not exist. It
+  now documents `getRawByUrl()` and the `direct()` shortcut, and notes that the old
+  `getCached($url)` helper has no direct replacement.
 - `index()->all()`, `index()->collect()`, `cache($ttl)->index()` and `zoek()->all()` now return
   every item of a paginated result. Each page yielded its items with keys starting at 0, so
   realising the collection into an array let every page overwrite the previous one and only the
   items of the last page remained. The collection is now keyed sequentially across pages.
   Iterating with `foreach`, `each()` or `take()` already saw every item and still streams page by
   page; the only difference there is that the keys no longer restart at 0 on each page.
+  Results cached with `cache($ttl)` by an earlier version still hold the truncated list; clear
+  those entries after upgrading or let them expire.
 
 ## [1.2.3] - 2026-07-14
 
