@@ -131,6 +131,8 @@ abstract class AbstractEndpoint
      * Lazily paginate a search (_zoek) endpoint: the first page is a POST with the search body,
      * subsequent pages follow the "next" links with GET.
      *
+     * The items are re-keyed sequentially across pages (see paginate()).
+     *
      * @param  array<string, mixed>  $body
      * @return LazyCollection<int, array<string, mixed>>
      */
@@ -159,11 +161,15 @@ abstract class AbstractEndpoint
 
                 yield from $this->mapResults($response['results'] ?? []);
             }
-        });
+        })->values();
     }
 
     /**
      * Lazily yield every result item across all pages, following "next" links.
+     *
+     * Each page yields its items with keys starting at 0, so the collection is re-keyed with
+     * values(). Without that, all(), collect() and the cache would keep only the last page,
+     * because later pages overwrite the keys of earlier ones. values() stays lazy.
      *
      * @param  array<string, mixed>  $params
      * @return LazyCollection<int, array<string, mixed>>
@@ -205,7 +211,7 @@ abstract class AbstractEndpoint
 
                 yield from $this->mapResults($response['results'] ?? []);
             }
-        });
+        })->values();
     }
 
     /**
